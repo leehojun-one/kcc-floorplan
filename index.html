@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>KCC 현장 실측 · 1단계 평면도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --panel:#FFFFFF; --ink:#1A1D21; --muted:#697586;
+    --line:#DCE1E8; --line-2:#EAEEF3;
+    --wall:#2B2F36; --glass:#2E6BF0; --glass-soft:#DCE7FF;
+    --cb:#F59E0B; --beam:#8A94A6; --outer:#0EA5A0;
+    --kcc:#E1251B; --warn:#E1251B; --ok:#0E9F6E;
+    --sel:#2E6BF0;
+    --shadow:0 8px 30px rgba(20,30,50,.14);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; margin:0;}
+  body{
+    font-family:"Space Grotesk",system-ui,sans-serif; color:var(--ink);
+    background:var(--bg); overflow:hidden; touch-action:none;
+    display:flex; flex-direction:column;
+  }
+  .mono{font-family:"IBM Plex Mono",monospace;}
+
+  /* ---------- top bar ---------- */
+  header{
+    height:52px; flex:0 0 52px; background:var(--panel);
+    border-bottom:1px solid var(--line); display:flex; align-items:center;
+    gap:8px; padding:0 12px; z-index:40;
+  }
+  .brand{display:flex; align-items:center; gap:9px; margin-right:6px;}
+  .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--kcc);}
+  .brand b{font-weight:700; letter-spacing:-.2px; font-size:15px;}
+  .brand span{font-size:11px;color:var(--muted); font-weight:500;}
+  .spacer{flex:1;}
+  .btn{
+    height:36px; padding:0 13px; border-radius:9px; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink); font-family:inherit; font-weight:600;
+    font-size:13px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    user-select:none;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .btn.active{background:#EAF0FF; border-color:#B9CCFF; color:#1B4ED8;}
+  .btn.warn{color:var(--kcc); border-color:#F3C9C6;}
+  .btn.icon{width:36px; padding:0; justify-content:center; font-size:17px;}
+  .btn:disabled{opacity:.4; pointer-events:none;}
+
+  /* ---------- body layout ---------- */
+  .stage{flex:1; display:flex; min-height:0; position:relative;}
+
+  /* left palette rail */
+  .rail{
+    width:118px; flex:0 0 118px; background:var(--panel);
+    border-right:1px solid var(--line); overflow-y:auto; overflow-x:hidden;
+    padding:10px 9px 30px; z-index:30;
+  }
+  .rail h4{
+    margin:12px 2px 7px; font-size:10.5px; letter-spacing:.6px; color:var(--muted);
+    text-transform:uppercase; font-weight:700;
+  }
+  .rail h4:first-child{margin-top:2px;}
+  .pal{display:grid; grid-template-columns:1fr 1fr; gap:7px;}
+  .chip{
+    background:#FBFCFE; border:1px solid var(--line); border-radius:10px;
+    padding:6px 3px 5px; text-align:center; cursor:grab; touch-action:none;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .chip:active{cursor:grabbing; border-color:var(--glass); background:#F1F6FF;}
+  .chip svg{width:38px; height:30px; display:block;}
+  .chip .cap{font-size:8.5px; line-height:1.05; color:var(--muted); font-weight:600;}
+  .chip.cb .cap{color:#B4700A;}
+
+  /* canvas */
+  .canvas-wrap{flex:1; position:relative; min-width:0;}
+  svg#plan{width:100%; height:100%; display:block; background:
+    radial-gradient(circle at 30% 20%, #FBFCFE, #EEF1F6);
+    cursor:crosshair; touch-action:none;}
+  svg#plan.edit{cursor:default;}
+
+  .hint{
+    position:absolute; left:50%; top:14px; transform:translateX(-50%);
+    background:rgba(26,29,33,.9); color:#fff; padding:7px 14px; border-radius:20px;
+    font-size:12px; font-weight:600; pointer-events:none; z-index:20;
+    display:flex; align-items:center; gap:7px; white-space:nowrap;
+    box-shadow:var(--shadow);
+  }
+  .hint b{color:#8FB4FF;}
+  .zoombar{position:absolute; right:14px; bottom:14px; display:flex; flex-direction:column;
+    gap:6px; z-index:20;}
+  .zoombar .btn{width:40px;height:40px;justify-content:center;font-size:19px;box-shadow:var(--shadow);}
+
+  .ghost{
+    position:fixed; pointer-events:none; z-index:200; opacity:.92;
+    transform:translate(-50%,-50%); filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));
+  }
+  .ghost svg{width:52px;height:42px;}
+
+  /* right drawer */
+  .drawer{
+    position:absolute; top:0; right:0; height:100%; width:35%; min-width:320px; max-width:440px;
+    background:var(--panel); border-left:1px solid var(--line); box-shadow:var(--shadow);
+    transform:translateX(102%); transition:transform .28s cubic-bezier(.4,.0,.2,1);
+    z-index:35; display:flex; flex-direction:column;
+  }
+  .drawer.open{transform:translateX(0);}
+  .dw-head{
+    padding:14px 16px 12px; border-bottom:1px solid var(--line); display:flex;
+    align-items:flex-start; gap:10px;
+  }
+  .dw-head .tag{
+    font-size:10px; font-weight:700; letter-spacing:.5px; color:#fff; background:var(--glass);
+    padding:3px 8px; border-radius:6px; text-transform:uppercase;
+  }
+  .dw-head .tag.wall{background:var(--wall);}
+  .dw-title{font-size:16px; font-weight:700; margin:6px 0 1px;}
+  .dw-sub{font-size:11.5px; color:var(--muted);}
+  .dw-close{margin-left:auto; width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;font-size:16px;color:var(--muted); flex:0 0 auto;}
+  .dw-body{flex:1; overflow-y:auto; padding:14px 16px 40px;}
+
+  .card{border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px;}
+  .card h5{margin:0 0 9px; font-size:11px; letter-spacing:.4px; color:var(--muted);
+    text-transform:uppercase; font-weight:700; display:flex; align-items:center; gap:6px;}
+  .laser{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .laser label{font-size:9.5px; color:var(--muted); font-weight:600; display:block; margin-bottom:3px; text-align:center;}
+  .laser input{
+    width:100%; height:40px; text-align:center; border:1px solid var(--line); border-radius:9px;
+    font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:600; color:var(--ink);
+    background:#FBFCFE;
+  }
+  .laser input:focus{outline:none; border-color:var(--glass); background:#fff;}
+  .dimline{display:flex; align-items:center; gap:8px; margin:8px 0 0; flex-wrap:wrap;}
+  .dimline .k{font-size:12px; color:var(--muted); font-weight:600;}
+  .pill{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px;
+    background:#F1F4F9; border-radius:7px; padding:4px 9px;}
+  .pill.out{background:#E7F6EE; color:#0E7A50;}
+  .pill.ded{background:#FFF3E0; color:#B4700A;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+
+  .prod-grid{display:grid; grid-template-columns:1fr 1fr; gap:7px;}
+  .prod{
+    border:1px solid var(--line); border-radius:9px; padding:8px 9px; cursor:pointer;
+    background:#FBFCFE; font-size:11.5px; font-weight:600; line-height:1.25;
+  }
+  .prod .t{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--muted); font-weight:600;}
+  .prod.sel{border-color:var(--glass); background:#EAF0FF; color:#1B4ED8;}
+  .prod.sel .t{color:#3B6BE0;}
+
+  .ba-toggle{display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .ba-toggle button{
+    flex:1; height:38px; border:0; background:#fff; font-family:inherit; font-weight:700;
+    font-size:13px; color:var(--muted); cursor:pointer;
+  }
+  .ba-toggle button.on{background:var(--ink); color:#fff;}
+  .elev{background:#FBFCFE; border:1px solid var(--line); border-radius:12px; padding:10px;
+    display:flex; align-items:center; justify-content:center; min-height:150px;}
+  .elev svg{max-width:100%; height:auto;}
+
+  .warnbox{background:#FEF2F2; border:1px solid #F6C9C6; color:#B42318; border-radius:10px;
+    padding:10px 12px; font-size:11.5px; font-weight:600; line-height:1.4; display:none;}
+  .warnbox.show{display:block;}
+
+  .empty{padding:26px 18px; color:var(--muted); font-size:13px; text-align:center; line-height:1.6;}
+
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#C9D1DD; border-radius:9px; border:2px solid var(--panel);}
+
+  @media (max-width:820px){
+    .rail{width:96px; flex-basis:96px;}
+    .drawer{width:60%; min-width:280px;}
+  }
+
+  /* ---------- laser bluetooth ---------- */
+  #btnLaser.on{background:#E7F6EE;border-color:#A6E4C8;color:#0E7A50;}
+  .laser-pop{
+    position:fixed; top:58px; right:12px; width:340px; max-width:calc(100vw - 24px);
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); z-index:120; padding:14px; display:none;
+  }
+  .laser-pop.open{display:block;}
+  .laser-pop h4{margin:0 0 4px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:7px;}
+  .laser-pop .st{font-size:11.5px; font-weight:600; margin-bottom:10px;}
+  .laser-pop .st.off{color:var(--muted);} .laser-pop .st.on{color:#0E9F6E;} .laser-pop .st.err{color:var(--kcc);}
+  .laser-pop label{display:block; font-size:10px; font-weight:700; color:var(--muted); margin:8px 0 3px; letter-spacing:.3px;}
+  .laser-pop input[type=text]{width:100%; height:34px; border:1px solid var(--line); border-radius:8px;
+    font-family:"IBM Plex Mono",monospace; font-size:11px; padding:0 9px; background:#FBFCFE;}
+  .laser-pop input:focus{outline:none;border-color:var(--glass);background:#fff;}
+  .laser-pop .val{font-family:"IBM Plex Mono",monospace; font-size:26px; font-weight:600; text-align:center;
+    padding:10px; background:#F1F4F9; border-radius:10px; margin:10px 0;}
+  .laser-pop .val small{font-size:13px;color:var(--muted);}
+  .laser-pop .log{font-family:"IBM Plex Mono",monospace; font-size:9.5px; color:#5A6472; background:#0E1116;
+    color:#8FE3B0; border-radius:8px; padding:8px; height:74px; overflow-y:auto; white-space:pre-wrap;
+    line-height:1.45; margin-top:8px;}
+  .laser-pop .cfg{border-top:1px dashed var(--line); margin-top:12px; padding-top:6px;}
+  .laser-pop .cfg summary{font-size:11px; font-weight:700; color:var(--muted); cursor:pointer; padding:4px 0;}
+  .switch{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; margin-top:10px;}
+  .switch input{width:38px;height:22px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <b>KCC 현장 실측</b><span>· 1단계 평면도</span>
+  </div>
+  <button class="btn primary" id="btnDraw">✎ 벽 그리기</button>
+  <button class="btn" id="btnFinish" disabled>✓ 완료(닫기)</button>
+  <button class="btn" id="btnBeam">▤ 보 배치</button>
+  <button class="btn" id="btnOuter">◎ 외벽 지정</button>
+  <button class="btn" id="btnLaser">📡 레이저</button>
+  <div class="spacer"></div>
+  <button class="btn warn icon" id="btnUndo" title="되돌리기">↶</button>
+  <button class="btn warn" id="btnClear">전체 지우기</button>
+</header>
+
+<div class="stage">
+  <!-- palette -->
+  <aside class="rail" id="rail">
+    <h4>창 형태</h4>
+    <div class="pal" id="palWin"></div>
+    <h4>코너바 CB</h4>
+    <div class="pal" id="palCb"></div>
+    <h4>범례</h4>
+    <div style="font-size:9px;color:var(--muted);line-height:1.5;padding:2px 2px 0;">
+      <span style="color:var(--glass);font-weight:700;">■</span> 창호&nbsp;
+      <span style="color:var(--cb);font-weight:700;">■</span> CB<br>
+      <span style="color:var(--outer);font-weight:700;">■</span> 외벽(#망)&nbsp;
+      <span style="color:var(--beam);font-weight:700;">■</span> 보
+    </div>
+  </aside>
+
+  <!-- canvas -->
+  <div class="canvas-wrap">
+    <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="hint" id="hint"></div>
+    <div class="zoombar">
+      <button class="btn icon" id="zIn">＋</button>
+      <button class="btn icon" id="zOut">－</button>
+      <button class="btn icon" id="zFit" title="화면 맞춤">⤢</button>
+    </div>
+  </div>
+
+  <!-- drawer -->
+  <aside class="drawer" id="drawer">
+    <div class="dw-head" id="dwHead"></div>
+    <div class="dw-body" id="dwBody"></div>
+  </aside>
+</div>
+
+<script>
+/* =========================================================================
+   KCC 1단계 평면도 — 상태/유틸
+   ========================================================================= */
+const svg = document.getElementById('plan');
+const SVGNS = 'http://www.w3.org/2000/svg';
+const GRID = 40;         // 그리드 픽셀
+const SNAP = 20;         // 드로잉 스냅
+let vb = {x:0,y:0,w:1600,h:1000};   // viewBox (팬/줌)
+
+const state = {
+  mode:'draw',           // 'draw' | 'edit'
+  tool:null,             // 'beam' | 'outer' | null (edit 보조 도구)
+  pts:[],                // 그리는 중 임시 점
+  closed:false,
+  walls:[],              // {id,a:{x,y},b:{x,y},outer:bool}
+  verts:[],              // 폴리곤 꼭짓점 [{x,y}]
+  windows:[],            // {id,wallId,t,len,type,vent,H,measures:[..],product,ba}
+  corners:[],            // {id,vi, type}  (vi=꼭짓점 index)
+  beams:[],              // {id,wallId,t}
+  sel:null,              // {kind:'window'|'wall', id}
+  seq:1
+};
+const uid = ()=> 's'+(state.seq++);
+const clone = o=>JSON.parse(JSON.stringify(o));
+let history=[];
+function snapshot(){ history.push(clone({walls:state.walls,verts:state.verts,windows:state.windows,corners:state.corners,beams:state.beams})); if(history.length>40)history.shift(); }
+function undo(){ if(!history.length)return; const s=history.pop();
+  Object.assign(state,{walls:s.walls,verts:s.verts,windows:s.windows,corners:s.corners,beams:s.beams,sel:null});
+  closeDrawer(); render(); }
+
+/* ---- 창 형태 정의 (내관도 기준) ---- */
+const WIN_TYPES = {
+  d2      :{label:'이더블',      sub:'1:1',   split:[1,1]},
+  d12L    :{label:'1:2 좌벤트',  sub:'좁1:넓2', split:[1,2], vent:'R'}, // 좌측 좁은문
+  d12R    :{label:'1:2 우벤트',  sub:'넓2:좁1', split:[2,1], vent:'L'},
+  dUL     :{label:'U 좌벤트',    sub:'좌 수동',  split:'U-L', vent:'R'},
+  dUR     :{label:'U 우벤트',    sub:'우 수동',  split:'U-R', vent:'L'},
+  d3      :{label:'3더블',       sub:'25:50:25', split:[1,2,1]},
+  d3u     :{label:'3더블 언밸',  sub:'변칙',    split:[1,2,1], unbal:true},
+  d4      :{label:'4더블',       sub:'4짝균등',  split:[1,1,1,1]},
+  fix     :{label:'픽스창',      sub:'통유리',  split:[1]},
+};
+/* ---- CB 코너바 (공제 규격) ---- */
+const CB_TYPES = {
+  CB100:{label:'CB 100', ded:[100,100], note:'100×100'},
+  CB90 :{label:'CB 90',  ded:[100,45],  note:'100×45'},
+  CB45 :{label:'CB 45',  ded:[45,45],   note:'45×45'},
+  CB135:{label:'CB 135', ded:[45,45],   note:'135° 둔각', angle:135},
+};
+/* ---- 제품군 (Z 두께) ---- */
+const PRODUCTS = [
+  ['발코니 단창','141'],['발코니 이중창','251'],['공틀일체형','225'],
+  ['일반 이중창','230'],['일반 단창','115'],['픽스 100면','100'],
+  ['픽스 45면','45'],['CB90 ㅁ공틀','ㅁ'],['CB90 ㄷ공틀','ㄷ'],
+  ['CB45 ㅁ공틀','ㅁ'],['CB45 ㄷ공틀','ㄷ'],['터닝도어','도어'],
+];
+
+/* =========================================================================
+   좌표 변환 / 지오메트리
+   ========================================================================= */
+function screenToSvg(cx,cy){
+  const pt = svg.createSVGPoint(); pt.x=cx; pt.y=cy;
+  const m = svg.getScreenCTM().inverse();
+  const p = pt.matrixTransform(m); return {x:p.x, y:p.y};
+}
+const snap = v => Math.round(v/SNAP)*SNAP;
+const dist = (a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function distToSeg(p,a,b){
+  const dx=b.x-a.x, dy=b.y-a.y, L2=dx*dx+dy*dy||1;
+  let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/L2; t=Math.max(0,Math.min(1,t));
+  const proj={x:a.x+t*dx, y:a.y+t*dy};
+  return {d:dist(p,proj), t, proj};
+}
+function centroid(){ if(!state.verts.length)return {x:vb.x+vb.w/2,y:vb.y+vb.h/2};
+  let x=0,y=0; state.verts.forEach(v=>{x+=v.x;y+=v.y;}); return {x:x/state.verts.length,y:y/state.verts.length}; }
+function wallById(id){ return state.walls.find(w=>w.id===id); }
+function winById(id){ return state.windows.find(w=>w.id===id); }
+
+/* CB 공제: 창호의 벽 양끝에 붙은 CB만큼 W 감산 */
+function windowDeduction(win){
+  const w = wallById(win.wallId); if(!w) return {a:0,b:0,total:0};
+  const via = state.verts.findIndex(v=>Math.hypot(v.x-w.a.x,v.y-w.a.y)<1);
+  const vib = state.verts.findIndex(v=>Math.hypot(v.x-w.b.x,v.y-w.b.y)<1);
+  const cbA = state.corners.find(c=>c.vi===via);
+  const cbB = state.corners.find(c=>c.vi===vib);
+  const dA = cbA ? CB_TYPES[cbA.type].ded[0] : 0;
+  const dB = cbB ? CB_TYPES[cbB.type].ded[1] : 0;
+  return {a:dA, b:dB, total:dA+dB, cbA, cbB};
+}
+function measuredW(win){
+  const m = (win.measures||[]).filter(x=>x>0);
+  if(!m.length) return 0;
+  return Math.round(m.reduce((a,b)=>a+b,0)/m.length); // 3회 평균
+}
+
+/* =========================================================================
+   렌더링
+   ========================================================================= */
+function el(tag,attrs={},parent){ const e=document.createElementNS(SVGNS,tag);
+  for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent)parent.appendChild(e); return e; }
+
+function render(){
+  svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  svg.innerHTML='';
+  drawGrid();
+  const c = centroid();
+
+  // 완성된 폴리곤 벽
+  state.walls.forEach(w=>{
+    const gline = el('line',{x1:w.a.x,y1:w.a.y,x2:w.b.x,y2:w.b.y,
+      stroke:w.outer?'var(--outer)':'var(--wall)', 'stroke-width':10,'stroke-linecap':'round'},svg);
+    gline.style.cursor='pointer';
+    gline.addEventListener('pointerup',ev=>{ if(state._panned)return; ev.stopPropagation();
+      onWallTap(w); });
+    // 실측 라벨
+    const mid={x:(w.a.x+w.b.x)/2,y:(w.a.y+w.b.y)/2};
+    const nrm=wallNormal(w,c);
+    const lx=mid.x-nrm.x*22, ly=mid.y-nrm.y*22;
+    const t=el('text',{x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'middle',
+      'font-family':'IBM Plex Mono','font-size':16,'font-weight':600,
+      fill:w.outer?'#0B7C77':'#5A6472'},svg);
+    t.textContent = wallLabel(w);
+    if(w.outer){ const tag=el('text',{x:mid.x+nrm.x*22,y:mid.y+nrm.y*22,'text-anchor':'middle',
+      'dominant-baseline':'middle','font-family':'IBM Plex Mono','font-size':13,'font-weight':700,
+      fill:'var(--outer)'},svg); tag.textContent='#(망)'; }
+  });
+
+  // 보
+  state.beams.forEach(bm=>{ const w=wallById(bm.wallId); if(!w)return;
+    const p=lerp(w.a,w.b,bm.t); const dir=unit(w.a,w.b);
+    for(let i=-2;i<=2;i++){ const s={x:p.x+dir.x*i*7 - (-dir.y)*9, y:p.y+dir.y*i*7 - (dir.x)*9};
+      const e2={x:p.x+dir.x*i*7 + (-dir.y)*9, y:p.y+dir.y*i*7 + (dir.x)*9};
+      el('line',{x1:s.x,y1:s.y,x2:e2.x,y2:e2.y,stroke:'var(--beam)','stroke-width':2},svg); }
+  });
+
+  // 창호
+  state.windows.forEach(win=>{
+    const w=wallById(win.wallId); if(!w)return;
+    const dir=unit(w.a,w.b), nrm=wallNormal(w,c);
+    const ctr=lerp(w.a,w.b,win.t);
+    const half=win.len/2;
+    const p1={x:ctr.x-dir.x*half, y:ctr.y-dir.y*half};
+    const p2={x:ctr.x+dir.x*half, y:ctr.y+dir.y*half};
+    const isSel = state.sel&&state.sel.kind==='window'&&state.sel.id===win.id;
+    // 창 유리 밴드 (실내측으로 살짝 오프셋)
+    const off=6;
+    const g1={x:p1.x-nrm.x*off,y:p1.y-nrm.y*off}, g2={x:p2.x-nrm.x*off,y:p2.y-nrm.y*off};
+    const band=el('line',{x1:g1.x,y1:g1.y,x2:g2.x,y2:g2.y,
+      stroke:isSel?'var(--sel)':'var(--glass)','stroke-width':7,'stroke-linecap':'round'},svg);
+    band.style.cursor='pointer';
+    band.addEventListener('pointerup',ev=>{ if(state._panned)return; ev.stopPropagation(); onWindowTap(win); });
+    // 개구부 흰 라인 (벽 위)
+    el('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:'#fff','stroke-width':4},svg);
+    // 분할선(평면 간이) + 벤트 화살표(실내측)
+    drawPlanVent(win, ctr, dir, nrm);
+    // 방충망(외벽) — 외측
+    if(w.outer){ const m1={x:p1.x+nrm.x*7,y:p1.y+nrm.y*7}, m2={x:p2.x+nrm.x*7,y:p2.y+nrm.y*7};
+      el('line',{x1:m1.x,y1:m1.y,x2:m2.x,y2:m2.y,stroke:'var(--outer)','stroke-width':2,
+        'stroke-dasharray':'3 3'},svg); }
+    // 라벨
+    const lbl=el('text',{x:ctr.x-nrm.x*20,y:ctr.y-nrm.y*20,'text-anchor':'middle',
+      'dominant-baseline':'middle','font-family':'Space Grotesk','font-size':13,'font-weight':700,
+      fill:isSel?'var(--sel)':'#1B3A8A'},svg);
+    lbl.textContent = win.name;
+    lbl.style.pointerEvents='none';
+  });
+
+  // CB 코너바
+  state.corners.forEach(cb=>{
+    const v=state.verts[cb.vi]; if(!v)return;
+    const sz = cb.type==='CB100'?18: cb.type==='CB45'?12:15;
+    const r=el('rect',{x:v.x-sz/2,y:v.y-sz/2,width:sz,height:sz,rx:2,
+      fill:'var(--cb)',stroke:'#fff','stroke-width':2},svg);
+    r.style.cursor='pointer';
+    r.addEventListener('pointerup',ev=>{ ev.stopPropagation(); if(state._panned)return;
+      snapshot(); const i=state.corners.indexOf(cb); state.corners.splice(i,1); render(); });
+    const t=el('text',{x:v.x,y:v.y-sz/2-6,'text-anchor':'middle','font-family':'IBM Plex Mono',
+      'font-size':11,'font-weight':700,fill:'#B4700A'},svg); t.textContent=CB_TYPES[cb.type].label;
+    t.style.pointerEvents='none';
+  });
+
+  // 그리는 중 임시 점/선
+  if(state.mode==='draw'&&state.pts.length){
+    for(let i=0;i<state.pts.length-1;i++){ const a=state.pts[i],b=state.pts[i+1];
+      el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'var(--wall)','stroke-width':8,
+        'stroke-linecap':'round','opacity':.85},svg); }
+    state.pts.forEach((p,i)=>{ el('circle',{cx:p.x,cy:p.y,r:i===0?9:6,
+      fill:i===0?'var(--kcc)':'#fff',stroke:'var(--wall)','stroke-width':2},svg); });
+    if(rubber){ const last=state.pts[state.pts.length-1];
+      el('line',{x1:last.x,y1:last.y,x2:rubber.x,y2:rubber.y,stroke:'var(--muted)',
+        'stroke-width':2,'stroke-dasharray':'6 5'},svg); }
+  }
+  updateHint();
+}
+
+function drawGrid(){
+  const g=el('g',{},svg);
+  const x0=Math.floor(vb.x/GRID)*GRID, y0=Math.floor(vb.y/GRID)*GRID;
+  for(let x=x0;x<vb.x+vb.w;x+=GRID)
+    el('line',{x1:x,y1:vb.y,x2:x,y2:vb.y+vb.h,stroke:'#E3E8EF','stroke-width':1},g);
+  for(let y=y0;y<vb.y+vb.h;y+=GRID)
+    el('line',{x1:vb.x,y1:y,x2:vb.x+vb.w,y2:y,stroke:'#E3E8EF','stroke-width':1},g);
+}
+function unit(a,b){ const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1; return {x:dx/l,y:dy/l}; }
+function lerp(a,b,t){ return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t}; }
+function wallNormal(w,c){ // 실외 방향(중심 반대) 법선
+  const d=unit(w.a,w.b); let n={x:-d.y,y:d.x};
+  const mid={x:(w.a.x+w.b.x)/2,y:(w.a.y+w.b.y)/2};
+  if((mid.x-c.x)*n.x+(mid.y-c.y)*n.y<0){ n.x=-n.x; n.y=-n.y; } return n;
+}
+function wallLabel(w){
+  const win=state.windows.find(x=>x.wallId===w.id);
+  if(win){ const mw=measuredW(win); if(mw) return mw+''; }
+  return Math.round(dist(w.a,w.b)*10)+'~'; // 스케치 근사값
+}
+function drawPlanVent(win,ctr,dir,nrm){
+  const def=WIN_TYPES[win.type]; if(!def||!def.vent)return;
+  const ax=ctr.x-nrm.x*13, ay=ctr.y-nrm.y*13;
+  const arrow = def.vent==='R'?'◀':'▶';
+  const tag = def.vent==='R'?'[우]':'[좌]';
+  const t=el('text',{x:ax,y:ay,'text-anchor':'middle','dominant-baseline':'middle',
+    'font-family':'IBM Plex Mono','font-size':12,'font-weight':700,fill:'var(--kcc)'},svg);
+  t.textContent=arrow+' '+tag; t.style.pointerEvents='none';
+}
+
+/* =========================================================================
+   팔레트 (창 형태 / CB 아이콘)
+   ========================================================================= */
+function winIcon(type){
+  const d=WIN_TYPES[type]; const W=44,H=30,pad=3;
+  let bars=''; const inner=W-pad*2;
+  const spl = Array.isArray(d.split)?d.split:(d.split==='U-L'?[1,3]:d.split==='U-R'?[3,1]:[1]);
+  const tot=spl.reduce((a,b)=>a+b,0); let x=pad;
+  spl.forEach((s,i)=>{ const w=inner*s/tot;
+    if(i>0) bars+=`<line x1="${x}" y1="${pad}" x2="${x}" y2="${H-pad}" stroke="#2E6BF0" stroke-width="1.2"/>`;
+    x+=w; });
+  let vent='';
+  if(d.vent){ const arw=d.vent==='R'?'◀':'▶'; vent=`<text x="${W/2}" y="${H/2+4}" text-anchor="middle" font-size="10" fill="#E1251B" font-family="monospace">${arw}</text>`; }
+  return `<svg viewBox="0 0 ${W} ${H}"><rect x="${pad}" y="${pad}" width="${inner}" height="${H-pad*2}" rx="2" fill="#EAF0FF" stroke="#2E6BF0" stroke-width="1.4"/>${bars}${vent}</svg>`;
+}
+function cbIcon(type){
+  const map={CB100:[13,13],CB90:[13,7],CB45:[8,8],CB135:[11,11]};
+  const [a,b]=map[type]; 
+  if(type==='CB135'){ return `<svg viewBox="0 0 44 30"><path d="M8 22 L22 8 L36 22" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linejoin="round"/></svg>`; }
+  return `<svg viewBox="0 0 44 30"><rect x="${22-a/2}" y="${15-b/2}" width="${a}" height="${b}" rx="1.5" fill="#F59E0B"/><line x1="6" y1="15" x2="${22-a/2}" y2="15" stroke="#8A94A6" stroke-width="3"/><line x1="${22+a/2}" y1="15" x2="38" y2="15" stroke="#8A94A6" stroke-width="3"/></svg>`;
+}
+function buildPalette(){
+  const pw=document.getElementById('palWin');
+  Object.keys(WIN_TYPES).forEach(k=>{ const d=WIN_TYPES[k];
+    const c=document.createElement('div'); c.className='chip'; c.dataset.kind='window'; c.dataset.sub=k;
+    c.innerHTML=winIcon(k)+`<div class="cap">${d.label}<br>${d.sub}</div>`;
+    pw.appendChild(c); });
+  const pc=document.getElementById('palCb');
+  Object.keys(CB_TYPES).forEach(k=>{ const d=CB_TYPES[k];
+    const c=document.createElement('div'); c.className='chip cb'; c.dataset.kind='cb'; c.dataset.sub=k;
+    c.innerHTML=cbIcon(k)+`<div class="cap">${d.label}<br>${d.note}</div>`;
+    pc.appendChild(c); });
+}
+
+/* =========================================================================
+   드래그 앤 드롭 (팔레트 → 캔버스, 자동 스냅)
+   ========================================================================= */
+let drag=null, ghostEl=null;
+function makeGhost(kind,sub){
+  ghostEl=document.createElement('div'); ghostEl.className='ghost';
+  ghostEl.innerHTML = kind==='window'?winIcon(sub):cbIcon(sub);
+  document.body.appendChild(ghostEl);
+}
+document.getElementById('rail').addEventListener('pointerdown',e=>{
+  const chip=e.target.closest('.chip'); if(!chip)return;
+  if(!state.walls.length){ flashHint('먼저 벽을 그려주세요'); return; }
+  e.preventDefault();
+  drag={kind:chip.dataset.kind, sub:chip.dataset.sub};
+  makeGhost(drag.kind,drag.sub); moveGhost(e.clientX,e.clientY);
+});
+function moveGhost(x,y){ if(ghostEl){ghostEl.style.left=x+'px'; ghostEl.style.top=y+'px';} }
+document.addEventListener('pointermove',e=>{
+  if(!drag)return; moveGhost(e.clientX,e.clientY);
+  const p=screenToSvg(e.clientX,e.clientY); highlightTarget(drag.kind,p);
+});
+document.addEventListener('pointerup',e=>{
+  if(!drag)return;
+  const p=screenToSvg(e.clientX,e.clientY);
+  if(drag.kind==='window') placeWindow(p,drag.sub);
+  else placeCb(p,drag.sub);
+  if(ghostEl){ghostEl.remove(); ghostEl=null;} clearHighlight(); drag=null;
+});
+let highlightEl=null;
+function clearHighlight(){ if(highlightEl){highlightEl.remove(); highlightEl=null;} }
+function highlightTarget(kind,p){
+  clearHighlight();
+  if(kind==='window'){ const hit=nearestWall(p); if(hit&&hit.d<70){
+    highlightEl=el('line',{x1:hit.wall.a.x,y1:hit.wall.a.y,x2:hit.wall.b.x,y2:hit.wall.b.y,
+      stroke:'var(--glass)','stroke-width':16,'opacity':.28,'stroke-linecap':'round'},svg); } }
+  else { const hit=nearestVert(p); if(hit&&hit.d<70){
+    highlightEl=el('circle',{cx:hit.v.x,cy:hit.v.y,r:20,fill:'var(--cb)','opacity':.3},svg); } }
+}
+function nearestWall(p){ let best=null;
+  state.walls.forEach(w=>{ const r=distToSeg(p,w.a,w.b);
+    if(!best||r.d<best.d) best={wall:w,d:r.d,t:r.t}; }); return best; }
+function nearestVert(p){ let best=null;
+  state.verts.forEach((v,i)=>{ const d=dist(p,v); if(!best||d<best.d) best={v,i,d}; }); return best; }
+
+function placeWindow(p,type){
+  const hit=nearestWall(p); if(!hit||hit.d>70){ flashHint('벽 위에 놓아주세요'); return; }
+  snapshot();
+  const wLen=dist(hit.wall.a,hit.wall.b);
+  const len=Math.max(80,Math.min(wLen*0.7,320));
+  const n=state.windows.filter(x=>x.wallId===hit.wall.id).length;
+  const nameBase='W'+(state.windows.length+1);
+  const win={id:uid(), wallId:hit.wall.id, t:Math.max(len/2/wLen,Math.min(1-len/2/wLen,hit.t)),
+    len, type, name:nameBase, H:2100, measures:[0,0,0], product:null, ba:'after'};
+  state.windows.push(win); render(); onWindowTap(win);
+}
+function placeCb(p,type){
+  const hit=nearestVert(p); if(!hit||hit.d>70){ flashHint('벽 모서리에 놓아주세요'); return; }
+  snapshot();
+  const ex=state.corners.find(c=>c.vi===hit.i);
+  if(ex) ex.type=type; else state.corners.push({id:uid(),vi:hit.i,type});
+  render(); refreshDrawerIfWindow();
+}
+
+/* =========================================================================
+   캔버스 상호작용 (드로잉 / 팬 / 줌 / 탭)
+   ========================================================================= */
+let rubber=null, panStart=null;
+svg.addEventListener('pointerdown',e=>{
+  if(drag)return;
+  state._panned=false;
+  const p=screenToSvg(e.clientX,e.clientY);
+  if(state.mode==='draw'){ panStart=null; return; } // 드로잉은 up에서 점 추가
+  // edit: 빈 곳 pointerdown → 팬 시작
+  panStart={sx:e.clientX,sy:e.clientY,vbx:vb.x,vby:vb.y, moved:false};
+});
+svg.addEventListener('pointermove',e=>{
+  if(drag)return;
+  const p=screenToSvg(e.clientX,e.clientY);
+  if(state.mode==='draw'&&state.pts.length){ rubber={x:snap(p.x),y:snap(p.y)}; render(); return; }
+  if(panStart && e.buttons){
+    const dx=e.clientX-panStart.sx, dy=e.clientY-panStart.sy;
+    if(Math.abs(dx)+Math.abs(dy)>6){ panStart.moved=true; state._panned=true;
+      const scale=vb.w/svg.clientWidth;
+      vb.x=panStart.vbx-dx*scale; vb.y=panStart.vby-dy*scale; render(); }
+  }
+});
+svg.addEventListener('pointerup',e=>{
+  if(drag)return;
+  const p=screenToSvg(e.clientX,e.clientY);
+  if(state.mode==='draw'){ addDrawPoint(p); return; }
+  if(panStart&&!panStart.moved){ // 빈 곳 탭 → 선택 해제
+    closeDrawer(); state.sel=null; render();
+  }
+  panStart=null;
+});
+
+function addDrawPoint(p){
+  const sp={x:snap(p.x),y:snap(p.y)};
+  // 시작점 근처 클릭 → 폴리곤 닫기
+  if(state.pts.length>=3 && dist(sp,state.pts[0])<24){ finishPolygon(); return; }
+  state.pts.push(sp); document.getElementById('btnFinish').disabled = state.pts.length<3;
+  rubber=null; render();
+}
+function finishPolygon(){
+  if(state.pts.length<3){ flashHint('점을 3개 이상 찍어주세요'); return; }
+  snapshot();
+  state.verts=state.pts.slice();
+  state.walls=[];
+  for(let i=0;i<state.verts.length;i++){ const a=state.verts[i], b=state.verts[(i+1)%state.verts.length];
+    // 외벽 자동 추정: 폴리곤 아래/바깥쪽… 기본 false, 사용자가 지정
+    state.walls.push({id:uid(),a,b,outer:false, ai:i, bi:(i+1)%state.verts.length}); }
+  state.pts=[]; rubber=null; state.closed=true;
+  setMode('edit'); render();
+  flashHint('벽 완성 · 외벽 지정 후 모듈을 끌어놓으세요');
+}
+
+/* zoom */
+function zoomAt(cx,cy,factor){
+  const p=screenToSvg(cx,cy);
+  vb.w*=factor; vb.h*=factor;
+  vb.x=p.x-(p.x-vb.x)*factor; vb.y=p.y-(p.y-vb.y)*factor; render();
+}
+svg.addEventListener('wheel',e=>{ e.preventDefault();
+  zoomAt(e.clientX,e.clientY, e.deltaY>0?1.12:0.9); },{passive:false});
+document.getElementById('zIn').onclick=()=>zoomAt(svg.clientWidth/2,svg.clientHeight/2,0.85);
+document.getElementById('zOut').onclick=()=>zoomAt(svg.clientWidth/2,svg.clientHeight/2,1.18);
+document.getElementById('zFit').onclick=fitView;
+function fitView(){
+  const pts=state.verts.length?state.verts:state.pts;
+  if(!pts.length){ vb={x:0,y:0,w:1600,h:1000}; render(); return; }
+  let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+  pts.forEach(p=>{minx=Math.min(minx,p.x);miny=Math.min(miny,p.y);maxx=Math.max(maxx,p.x);maxy=Math.max(maxy,p.y);});
+  const pad=140; minx-=pad;miny-=pad;maxx+=pad;maxy+=pad;
+  const w=maxx-minx,h=maxy-miny; const ar=svg.clientWidth/svg.clientHeight;
+  let W=w,H=h; if(w/h>ar)H=w/ar; else W=h*ar;
+  vb={x:minx-(W-w)/2,y:miny-(H-h)/2,w:W,h:H}; render();
+}
+
+/* 벽/창호 탭 */
+function onWallTap(w){
+  if(state.tool==='outer'){ snapshot(); w.outer=!w.outer; render(); return; }
+  if(state.tool==='beam'){ snapshot(); const r=distToSeg(lastTapPt||{x:(w.a.x+w.b.x)/2,y:(w.a.y+w.b.y)/2},w.a,w.b);
+    state.beams.push({id:uid(),wallId:w.id,t:0.5}); render(); return; }
+  state.sel={kind:'wall',id:w.id}; render(); openWallDrawer(w);
+}
+function onWindowTap(win){
+  state.tool=null; syncToolBtns();
+  state.sel={kind:'window',id:win.id}; render(); openWindowDrawer(win);
+}
+let lastTapPt=null;
+svg.addEventListener('pointerup',e=>{ lastTapPt=screenToSvg(e.clientX,e.clientY); },true);
+
+/* =========================================================================
+   서랍(Drawer)
+   ========================================================================= */
+const drawer=document.getElementById('drawer');
+const dwHead=document.getElementById('dwHead'), dwBody=document.getElementById('dwBody');
+function closeDrawer(){ drawer.classList.remove('open'); state.sel=null; }
+function refreshDrawerIfWindow(){ if(state.sel&&state.sel.kind==='window'){ const w=winById(state.sel.id); if(w)openWindowDrawer(w);} }
+
+function openWallDrawer(w){
+  dwHead.innerHTML=`<span class="tag wall">벽체</span>
+    <div><div class="dw-title">외벽/실측 설정</div>
+    <div class="dw-sub">이 벽에 창을 끌어놓거나 외벽 여부를 지정</div></div>
+    <button class="dw-close" onclick="closeDrawer()">✕</button>`;
+  dwBody.innerHTML=`
+    <div class="card">
+      <h5>외벽(외기 접면) 지정</h5>
+      <div class="ba-toggle">
+        <button class="${w.outer?'on':''}" onclick="setWallOuter('${w.id}',true)">외벽 · #(망)</button>
+        <button class="${!w.outer?'on':''}" onclick="setWallOuter('${w.id}',false)">내벽</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin:9px 0 0;line-height:1.5;">
+        외벽으로 지정하면 이 벽에 놓인 창호는 외창으로 판단되어 방충망 <b>#(망)</b>이 자동 표기됩니다.</p>
+    </div>
+    <div class="card">
+      <h5>보(梁) 추가</h5>
+      <button class="btn" style="width:100%;justify-content:center" onclick="addBeam('${w.id}')">▤ 이 벽에 보 추가</button>
+    </div>`;
+  drawer.classList.add('open');
+}
+window.setWallOuter=(id,v)=>{ const w=wallById(id); if(!w)return; snapshot(); w.outer=v; render(); openWallDrawer(w); };
+window.addBeam=(id)=>{ snapshot(); state.beams.push({id:uid(),wallId:id,t:0.5}); render(); flashHint('보 추가됨'); };
+
+function openWindowDrawer(win){
+  const def=WIN_TYPES[win.type];
+  const ded=windowDeduction(win);
+  const mw=measuredW(win);
+  const order=mw?Math.max(0,mw-ded.total):0;
+  const w=wallById(win.wallId);
+  dwHead.innerHTML=`<span class="tag">창호 ${win.name}</span>
+    <div><div class="dw-title">${def.label} <span style="color:var(--muted);font-weight:600;font-size:12px">${def.sub}</span></div>
+    <div class="dw-sub">${w&&w.outer?'외창 · 방충망 #(망)':'내창'} · 내관도 기준</div></div>
+    <button class="dw-close" onclick="closeDrawer()">✕</button>`;
+
+  dwBody.innerHTML=`
+    <div class="card">
+      <h5>① 3회 연속 레이저 실측 (가로 W · mm)</h5>
+      <div id="laserBanner"></div>
+      <div class="laser">
+        ${[0,1,2].map(i=>`<div><label>${i+1}회차</label>
+          <input class="mono" inputmode="numeric" data-i="${i}" value="${win.measures[i]||''}" placeholder="0"></div>`).join('')}
+      </div>
+      <div class="dimline">
+        <span class="k">실측 평균 W</span><span class="pill">${mw||'—'}</span>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <div><label style="font-size:9.5px;color:var(--muted);font-weight:600">세로 H (mm)</label>
+          <input class="mono" id="winH" inputmode="numeric" value="${win.H||''}" style="width:100%;height:38px;text-align:center;border:1px solid var(--line);border-radius:9px;font-family:'IBM Plex Mono';font-weight:600"></div>
+        <div><label style="font-size:9.5px;color:var(--muted);font-weight:600">캔버스 폭(스케치)</label>
+          <input type="range" min="60" max="360" value="${win.len}" id="winLen" style="width:100%;margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h5>② CB 공제 → 발주 치수</h5>
+      <div class="dimline">
+        <span class="k">좌측</span><span class="pill ded">${ded.a?('-'+ded.a):'0'}</span>
+        <span class="k">우측</span><span class="pill ded">${ded.b?('-'+ded.b):'0'}</span>
+        <span class="k">공제합</span><span class="pill ded">-${ded.total}</span>
+      </div>
+      <div class="dimline">
+        <span class="k" style="font-weight:700;color:var(--ink)">발주 W</span>
+        <span class="pill out" style="font-size:15px">${order||'—'}</span>
+        <span class="k">× H</span><span class="pill">${win.H||'—'}</span>
+      </div>
+      <p style="font-size:10.5px;color:var(--muted);margin:8px 0 0;line-height:1.5">
+        발주 W = 실측 평균 − (양측 CB 공제). 모서리에 CB를 끌어놓으면 자동 반영됩니다.</p>
+    </div>
+
+    <div class="card">
+      <h5>③ 2D 입면도 (내관도)</h5>
+      <div class="elev" id="elevBox">${elevationSvg(win,order||mw||1200)}</div>
+    </div>
+
+    <div class="card">
+      <h5>④ Before / After 상담</h5>
+      <div class="ba-toggle">
+        <button class="${win.ba==='before'?'on':''}" onclick="setBA('${win.id}','before')">Before(현재)</button>
+        <button class="${win.ba==='after'?'on':''}" onclick="setBA('${win.id}','after')">After(교체)</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin:9px 0 0">현재는 형태 비교용 토글입니다. 3D 퍼스펙티브는 다음 버전에서 연동됩니다.</p>
+    </div>
+
+    <div class="card">
+      <h5>⑤ 제품군 (Z 두께)</h5>
+      <div class="prod-grid">
+        ${PRODUCTS.map((p,i)=>`<div class="prod ${win.product===i?'sel':''}" onclick="setProduct('${win.id}',${i})">
+          ${p[0]}<div class="t">${p[1]}</div></div>`).join('')}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn warn" style="flex:1;justify-content:center" onclick="deleteWindow('${win.id}')">창호 삭제</button>
+    </div>
+  `;
+  drawer.classList.add('open');
+
+  // 입력 바인딩
+  dwBody.querySelectorAll('.laser input').forEach(inp=>{
+    inp.addEventListener('input',()=>{ const i=+inp.dataset.i; win.measures[i]=+inp.value||0;
+      updateWinDerived(win); });
+  });
+  const hEl=dwBody.querySelector('#winH'); if(hEl)hEl.addEventListener('input',()=>{ win.H=+hEl.value||0; updateWinDerived(win); });
+  const lEl=dwBody.querySelector('#winLen'); if(lEl)lEl.addEventListener('input',()=>{ win.len=+lEl.value; render(); });
+  updateLaserBanner(win);
+}
+function updateWinDerived(win){
+  const ded=windowDeduction(win), mw=measuredW(win), order=mw?Math.max(0,mw-ded.total):0;
+  // 부분 갱신
+  const pills=dwBody.querySelectorAll('.pill');
+  const box=dwBody.querySelector('#elevBox'); if(box)box.innerHTML=elevationSvg(win,order||mw||1200);
+  // 간단 재오픈 없이 텍스트만 갱신
+  openWindowDrawerLite(win);
+  render();
+}
+function openWindowDrawerLite(win){ // 값 파트만 다시 그림
+  const ded=windowDeduction(win), mw=measuredW(win), order=mw?Math.max(0,mw-ded.total):0;
+  const q=(sel)=>dwBody.querySelector(sel);
+  // 실측 평균/발주치수 갱신
+  const cards=dwBody.querySelectorAll('.pill');
+  // 안전하게 전체 재렌더 대신 주요 pill 갱신
+  const avgPill=dwBody.querySelectorAll('.card')[0]?.querySelector('.pill');
+  if(avgPill)avgPill.textContent=mw||'—';
+  const c2=dwBody.querySelectorAll('.card')[1];
+  if(c2){ const ps=c2.querySelectorAll('.pill');
+    if(ps[0])ps[0].textContent=ded.a?('-'+ded.a):'0';
+    if(ps[1])ps[1].textContent=ded.b?('-'+ded.b):'0';
+    if(ps[2])ps[2].textContent='-'+ded.total;
+    if(ps[3])ps[3].textContent=order||'—';
+    if(ps[4])ps[4].textContent=win.H||'—';
+  }
+}
+window.setBA=(id,v)=>{ const w=winById(id); w.ba=v; openWindowDrawer(w); };
+window.setProduct=(id,i)=>{ snapshot(); const w=winById(id); w.product=i; openWindowDrawer(w); };
+window.deleteWindow=(id)=>{ snapshot(); state.windows=state.windows.filter(w=>w.id!==id); closeDrawer(); render(); };
+
+/* 2D 입면도 SVG */
+function elevationSvg(win, w){
+  const def=WIN_TYPES[win.type];
+  const H=win.H||2100;
+  const VW=260, ratio=Math.min(H/Math.max(w,1),2.2);
+  const bw=VW-20, bh=Math.max(80,Math.min(170, bw*ratio*0.55));
+  const x0=10,y0=8;
+  let spl=Array.isArray(def.split)?def.split:(def.split==='U-L'?[1,3]:def.split==='U-R'?[3,1]:[1]);
+  const tot=spl.reduce((a,b)=>a+b,0);
+  let inner=''; let cx=x0;
+  spl.forEach((s,i)=>{ const pw=bw*s/tot;
+    if(i>0) inner+=`<line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0+bh}" stroke="#2E6BF0" stroke-width="1.6"/>`;
+    cx+=pw; });
+  // 벤트 화살표
+  let vent='';
+  if(def.vent){ const arw=def.vent==='R'?'◀':'▶'; const tg=def.vent==='R'?'[우]':'[좌]';
+    vent=`<text x="${x0+bw/2}" y="${y0+18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" fill="#E1251B">${arw} ${tg}</text>`; }
+  // 방충망 표기
+  const wall=wallById(win.wallId); let mesh='';
+  if(wall&&wall.outer){ mesh=`<text x="${x0+bw-4}" y="${y0+bh-6}" text-anchor="end" font-family="IBM Plex Mono" font-size="11" font-weight="700" fill="#0EA5A0">#(망)</text>`; }
+  // 치수 라벨
+  const dimW=`<text x="${x0+bw/2}" y="${y0+bh+18}" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#5A6472">W ${w}</text>`;
+  const dimH=`<text x="${x0-2}" y="${y0+bh/2}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#5A6472" transform="rotate(-90 ${x0-2} ${y0+bh/2})">H ${H}</text>`;
+  return `<svg viewBox="0 0 ${VW} ${bh+34}" width="${VW}">
+    <rect x="${x0}" y="${y0}" width="${bw}" height="${bh}" rx="3" fill="#EAF0FF" stroke="#2E6BF0" stroke-width="2"/>
+    ${inner}${vent}${mesh}${dimW}${dimH}</svg>`;
+}
+
+/* =========================================================================
+   툴바 / 모드
+   ========================================================================= */
+function setMode(m){ state.mode=m;
+  svg.classList.toggle('edit', m==='edit');
+  document.getElementById('btnDraw').classList.toggle('primary', m==='draw');
+  document.getElementById('btnDraw').classList.toggle('active', false);
+  if(m==='draw'){ state.tool=null; closeDrawer(); }
+  document.getElementById('btnFinish').disabled = !(m==='draw'&&state.pts.length>=3);
+  syncToolBtns(); updateHint();
+}
+function syncToolBtns(){
+  document.getElementById('btnBeam').classList.toggle('active', state.tool==='beam');
+  document.getElementById('btnOuter').classList.toggle('active', state.tool==='outer');
+}
+document.getElementById('btnDraw').onclick=()=>{
+  if(state.walls.length && !confirm('새로 벽을 그리면 기존 도면이 초기화됩니다. 계속할까요?')) return;
+  snapshot(); state.walls=[];state.verts=[];state.windows=[];state.corners=[];state.beams=[];state.pts=[];
+  closeDrawer(); setMode('draw'); render();
+};
+document.getElementById('btnFinish').onclick=finishPolygon;
+document.getElementById('btnBeam').onclick=()=>{ if(state.mode!=='edit'){flashHint('벽 완성 후 사용하세요');return;}
+  state.tool=state.tool==='beam'?null:'beam'; closeDrawer(); syncToolBtns(); updateHint(); };
+document.getElementById('btnOuter').onclick=()=>{ if(state.mode!=='edit'){flashHint('벽 완성 후 사용하세요');return;}
+  state.tool=state.tool==='outer'?null:'outer'; closeDrawer(); syncToolBtns(); updateHint(); };
+document.getElementById('btnUndo').onclick=undo;
+document.getElementById('btnClear').onclick=()=>{ if(!confirm('전체 지울까요?'))return;
+  snapshot(); state.walls=[];state.verts=[];state.windows=[];state.corners=[];state.beams=[];state.pts=[];
+  closeDrawer(); setMode('draw'); vb={x:0,y:0,w:1600,h:1000}; render(); };
+
+/* =========================================================================
+   힌트 / 부팅
+   ========================================================================= */
+const hintEl=document.getElementById('hint');
+let flashTimer=null;
+function updateHint(){
+  let msg='';
+  if(state.mode==='draw'){ msg = state.pts.length? '벽 <b>모서리</b>를 순서대로 탭 · 시작점 다시 탭하면 완성' : '<b>벽 모서리</b>를 탭해서 평면을 그리세요';
+  } else if(state.tool==='outer'){ msg='<b>외벽</b>으로 지정할 벽을 탭하세요 (외기 접면)';
+  } else if(state.tool==='beam'){ msg='<b>보</b>를 놓을 벽을 탭하세요';
+  } else { msg='좌측 모듈을 <b>끌어다 놓기</b> · 창호 탭 → 우측 서랍'; }
+  hintEl.innerHTML=msg;
+}
+function flashHint(t){ hintEl.innerHTML=t; clearTimeout(flashTimer);
+  flashTimer=setTimeout(updateHint,1600); }
+
+/* 초기 데모 벽 (감 잡기용, 지우기 가능) */
+function seed(){
+  const V=[{x:520,y:340},{x:1080,y:340},{x:1080,y:640},{x:520,y:640}];
+  state.verts=V.slice(); state.walls=[];
+  for(let i=0;i<V.length;i++){ state.walls.push({id:uid(),a:V[i],b:V[(i+1)%V.length],
+    outer:i===0, ai:i, bi:(i+1)%V.length}); }
+  state.closed=true; setMode('edit'); fitView();
+}
+
+/* =========================================================================
+   레이저 측정기 (Bosch GLM 50-27 CG) · Web Bluetooth
+   ── 안드로이드 Chrome + HTTPS(GitHub Pages) 환경에서만 동작 ──
+   ★ 기존 필드앱의 검증된 값이 있으면 아래 BOSCH 에 그대로 넣으면 됨.
+   ========================================================================= */
+const BOSCH = {
+  // ▼ 필드앱에서 검증된 Bosch GLM 50-27 CG 값 그대로
+  svc :'02a6c0d0-0451-4000-b000-fb3210111989',
+  char:'02a6c0d1-0451-4000-b000-fb3210111989',   // notify + write 겸용
+  enableCmd:new Uint8Array([0xc0,0x55,0x02,0x01,0x00,0x1a]), // 측정 스트림 활성화
+  pktPrefix:[0xc0,0x55,0x10,0x06],                            // 측정 패킷 헤더
+  parse(dv){
+    const b=new Uint8Array(dv.buffer);
+    if(this.pktPrefix.every((x,i)=>b[i]===x) && b.length>=11)
+      return Math.round(dv.getFloat32(7,true)*1000);          // float32(m) → mm
+    return null;                                               // 측정 외 패킷은 무시(로그만)
+  }
+};
+
+const laser = { device:null, server:null, char:null, connected:false, autofill:true, svc:'', ntf:'' };
+
+/* 팝오버 UI 생성 */
+const pop = document.createElement('div');
+pop.className='laser-pop';
+pop.innerHTML=`
+  <h4>📡 레이저 측정기 <span style="font-weight:600;color:var(--muted);font-size:11px">Bosch GLM 50-27 CG</span></h4>
+  <div class="st off" id="lsSt">연결 안됨</div>
+  <button class="btn primary" id="lsConnect" style="width:100%;justify-content:center">기기 검색 · 연결</button>
+  <div class="val" id="lsVal">— <small>mm</small></div>
+  <label class="switch"><input type="checkbox" id="lsAuto" checked> 측정값 → 열린 창호에 자동 입력</label>
+  <details class="cfg">
+    <summary>연결 정보 / 로그</summary>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);line-height:1.6;margin:6px 0">
+      SVC&nbsp;&nbsp;${BOSCH.svc.slice(0,13)}…<br>CHAR ${BOSCH.char.slice(0,13)}…</div>
+  </details>
+  <div class="log" id="lsLog">안드로이드 Chrome · https 에서 연결하세요.\n</div>
+`;
+document.body.appendChild(pop);
+
+const $ls = id => pop.querySelector('#'+id);
+function lslog(t){ const l=$ls('lsLog'); l.textContent += t+'\n'; l.scrollTop=l.scrollHeight; }
+function setStatus(cls,txt){ const s=$ls('lsSt'); s.className='st '+cls; s.textContent=txt;
+  const btn=$ls('lsConnect'); if(btn) btn.textContent = cls==='on' ? '연결 해제' : '기기 검색 · 연결';
+  document.getElementById('btnLaser').classList.toggle('on', cls==='on'); }
+
+document.getElementById('btnLaser').onclick=()=>pop.classList.toggle('open');
+$ls('lsAuto').onchange=e=>{ laser.autofill=e.target.checked; };
+$ls('lsConnect').onclick=connectLaser;
+
+async function connectLaser(){
+  if(!navigator.bluetooth){
+    setStatus('err','이 브라우저는 Web Bluetooth 미지원');
+    lslog('⚠ 안드로이드 Chrome + https 에서 열어주세요 (file:// · iOS 불가)'); return;
+  }
+  // 이미 연결돼 있으면 해제
+  if(laser.device && laser.device.gatt.connected){ laser.device.gatt.disconnect(); return; }
+  try{
+    setStatus('off','기기 선택 대기…'); lslog('▶ requestDevice…');
+    laser.device = await navigator.bluetooth.requestDevice(
+      {filters:[{services:[BOSCH.svc]}], optionalServices:[BOSCH.svc]});
+    lslog('· 선택: '+(laser.device.name||'GLM'));
+    laser.device.addEventListener('gattserverdisconnected', onDisconnect);
+    laser.server = await laser.device.gatt.connect();
+    const service = await laser.server.getPrimaryService(BOSCH.svc);
+    laser.char = await service.getCharacteristic(BOSCH.char);
+    await laser.char.startNotifications();
+    laser.char.addEventListener('characteristicvaluechanged', e=>handleRaw(e.target.value));
+    await laser.char.writeValueWithResponse(BOSCH.enableCmd);   // 측정 스트림 활성화
+    laser.connected=true; setStatus('on','연결됨 · '+(laser.device.name||'GLM'));
+    lslog('✔ 준비 완료 — 측정기 버튼을 누르세요');
+    if(state.sel && state.sel.kind==='window'){ const w=winById(state.sel.id); if(w)updateLaserBanner(w); }
+  }catch(err){
+    if(err.name==='NotFoundError'){ setStatus('off','기기 선택 취소'); lslog('· 취소됨'); }
+    else { setStatus('err','연결 실패'); lslog('✖ '+err.message); }
+  }
+}
+function onDisconnect(){ laser.connected=false; laser.char=null;
+  setStatus('off','연결 끊김'); lslog('· 연결 끊김'); }
+
+function handleRaw(dv){
+  const hex=[...new Uint8Array(dv.buffer)].map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  lslog('◀ '+hex);
+  let mm=null;
+  try{ mm = BOSCH.parse(dv); }catch(e){}
+  if(mm!=null && isFinite(mm)){
+    $ls('lsVal').innerHTML = mm+' <small>mm</small>';
+    lslog('   → '+mm+' mm');
+    if(laser.autofill) onLaserMeasurement(mm);
+  }
+}
+/* 측정값 도착 → 열린 창호의 다음 빈 회차에 입력 */
+function onLaserMeasurement(mm){
+  if(!(state.sel && state.sel.kind==='window')) return;
+  const win=winById(state.sel.id); if(!win) return;
+  let idx=win.measures.findIndex(v=>!v);
+  if(idx<0) idx=0; // 3회 다 찼으면 1회차부터 덮어씀
+  win.measures[idx]=mm;
+  const inp=dwBody.querySelector('.laser input[data-i="'+idx+'"]');
+  if(inp){ inp.value=mm; inp.style.background='#E7F6EE'; setTimeout(()=>inp.style.background='',600); }
+  updateWinDerived(win);
+  updateLaserBanner(win);
+}
+function updateLaserBanner(win){
+  const b=dwBody.querySelector('#laserBanner'); if(!b) return;
+  if(!laser.connected){ b.innerHTML=''; return; }
+  const next=win.measures.findIndex(v=>!v);
+  const label = next<0 ? '3회 완료 · 다시 측정하면 1회차부터 갱신' : (next+1)+'회차 대기 중';
+  b.innerHTML=`<div style="display:flex;align-items:center;gap:7px;background:#E7F6EE;border:1px solid #A6E4C8;
+    border-radius:9px;padding:7px 10px;margin-bottom:9px;font-size:11.5px;font-weight:600;color:#0E7A50">
+    📡 레이저 연결됨 · <b>${label}</b></div>`;
+}
+
+buildPalette();
+setMode('draw');
+seed();
+window.addEventListener('resize',()=>render());
+render();
+</script>
+</body>
+</html>
