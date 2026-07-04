@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>KCC 현장 실측 · 평면도</title>
+<title>ballo · 현장 실측 평면도</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -99,7 +99,7 @@
 <body>
 
 <header>
-  <div class="brand"><span class="dot"></span><b>KCC 실측</b></div>
+  <div class="brand"><span class="dot"></span><b>ballo</b></div>
   <button class="btn primary" id="btnSketch">✎ 그리기</button>
   <button class="btn go" id="btnConvert" disabled>→ 변환</button>
   <button class="btn on" id="btnOrtho">⊾ 30°</button>
@@ -108,6 +108,9 @@
   <div class="spacer"></div>
   <button class="btn" id="btnLaser">📡</button>
   <button class="btn" id="btnExport">DXF</button>
+  <button class="btn icon" id="btnSave" title="저장">💾</button>
+  <button class="btn icon" id="btnOpen" title="열기">📂</button>
+  <input type="file" id="fileInput" accept=".json,.ballo" style="display:none">
   <button class="btn warn icon" id="btnUndo" title="되돌리기">↶</button>
   <button class="btn warn icon" id="btnClear" title="지우기">🗑</button>
 </header>
@@ -125,7 +128,7 @@
   <!-- 벽체 두께 바 -->
   <div class="thbar" id="thbar">
     <div class="lab"><span class="sq"></span><span id="tbName">벽체</span></div>
-    <div class="th"><span class="t">벽두께</span><button id="thMinus">−</button><span class="v" id="thVal">180</span><button id="thPlus">＋</button></div>
+    <div class="th"><span class="t">전체 벽두께</span><input class="v" id="thInput" inputmode="numeric" value="180" style="width:66px;text-align:center;border:1px solid var(--line);border-radius:8px;height:38px;font-family:'IBM Plex Mono';font-weight:700;-webkit-user-select:text;user-select:text"><span class="t">mm</span></div>
     <div class="grow"></div>
     <button class="btn icon" id="tbClose">✕</button>
   </div>
@@ -151,7 +154,7 @@ let vb={x:0,y:0,w:1000,h:700};
 const PAPER={A3:{w:420,h:297},A4:{w:297,h:210}};   // mm (가로방향)
 const SCALES=[10,20,30,40,50,60,80,100,150];
 let paperSize='A3', scale=60;
-const DEF_TH=180, SNAP_DEG=30;
+let DEF_TH=180; const SNAP_DEG=30;
 function paperW(){ return PAPER[paperSize].w*scale; }   // 실측 mm 영역
 function paperH(){ return PAPER[paperSize].h*scale; }
 
@@ -208,7 +211,7 @@ function render(){
     // 치수 : 도면 바깥 연속 치수선(내경 구간 + 전체)
     drawDimensions(c,K);
   }
-  if(S.mode==='sketch'){ S.strokes.forEach(st=>strokePath(st,'#8A93A2',K)); if(S.cur)strokePath(S.cur,'var(--accent)',K); }
+  if(S.mode==='sketch'){ drawGhost(K); S.strokes.forEach(st=>strokePath(st,'#8A93A2',K)); if(S.cur)strokePath(S.cur,'var(--accent)',K); }
   updatePaperLbl(); updateHint();
 }
 function drawPaper(){
@@ -229,7 +232,7 @@ function drawInner(w,K){
 }
 /* 내부벽 양 끝을 벽두께/2 만큼 안으로 당김 = 외벽 중심선이 아닌 안쪽 면에서 끝남 */
 function trimInner(pts){ const t=DEF_TH/2, p=pts.map(v=>({x:v.x,y:v.y})), n=p.length;
-  if(n>=2){ const d0=unit(p[0],p[1]); p[0]={x:p[0].x+d0.x*t,y:p[0].y+d0.y*t};
+  if(n>=2 && chainLen(p)>t*3){ const d0=unit(p[0],p[1]); p[0]={x:p[0].x+d0.x*t,y:p[0].y+d0.y*t};
     const dl=unit(p[n-1],p[n-2]); p[n-1]={x:p[n-1].x+dl.x*t,y:p[n-1].y+dl.y*t}; }
   return p; }
 /* 열린 폴리라인 오프셋 (코너 miter = 필렛 이음) */
@@ -241,6 +244,10 @@ function offsetOpen(pts,off){ const n=pts.length,out=[];
   return out; }
 function polyPath(pts,color,wd){ const d=pts.map((p,i)=>(i?'L':'M')+p.x+' '+p.y).join(' ');
   el('path',{d,fill:'none',stroke:color,'stroke-width':wd,'stroke-linejoin':'miter','stroke-miterlimit':8},svg); }
+function drawGhost(K){
+  if(S.outline.length>=3) polyLine(S.outline,true,'#C3CBD6',1.4*K);
+  S.interiors.forEach(w=>{ if(w.pts.length>=2) polyPath(w.pts,'#C3CBD6',1.2*K); });
+}
 function strokePath(st,color,K){ if(st.length<2){ if(st.length)el('circle',{cx:st[0].x,cy:st[0].y,r:3*K,fill:color},svg); return; }
   el('polyline',{points:st.map(p=>`${p.x},${p.y}`).join(' '),fill:'none',stroke:color,'stroke-width':3*K,'stroke-linejoin':'round','stroke-linecap':'round',opacity:.9},svg); }
 function normal(a,b,c){ const n=perp(a,b),m={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
@@ -284,52 +291,75 @@ function hitWall(a,b,ref,K){ const h=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stro
   h.style.cursor='pointer'; h.dataset.wall=JSON.stringify(ref); }
 function selSeg(sel){ if(sel.t==='o'){ const n=S.outline.length;if(!n)return null;return {a:S.outline[sel.w],b:S.outline[(sel.w+1)%n]}; }
   const w=S.interiors[sel.s];if(!w)return null;return {a:w.pts[sel.w],b:w.pts[sel.w+1]}; }
-function sameRef(x,y){ return x&&y&&x.t===y.t&&x.w===y.w&&x.s===y.s&&x.i===y.i; }
+function sameRef(x,y){ return x&&y&&x.t===y.t&&x.a===y.a&&x.b===y.b&&x.w===y.w&&x.s===y.s&&x.i===y.i; }
 
-/* ===== 도면 바깥 연속 치수선 (내경 구간 + 전체) ===== */
+/* ===== 면별 치수선: 각 외곽변에 실제로 닿는 벽만 ===== */
 function gridX(){ const s=new Set(); S.outline.forEach(v=>s.add(Math.round(v.x)));
   S.interiors.forEach(w=>w.pts.forEach(v=>s.add(Math.round(v.x)))); return [...s].sort((a,b)=>a-b); }
 function gridY(){ const s=new Set(); S.outline.forEach(v=>s.add(Math.round(v.y)));
   S.interiors.forEach(w=>w.pts.forEach(v=>s.add(Math.round(v.y)))); return [...s].sort((a,b)=>a-b); }
 function obounds(){ const xs=S.outline.map(v=>v.x),ys=S.outline.map(v=>v.y);
   return {minx:Math.min(...xs),maxx:Math.max(...xs),miny:Math.min(...ys),maxy:Math.max(...ys)}; }
+/* 상/하 외곽변에 닿는 세로벽의 x (외곽 좌우 포함) */
+function edgeVerticals(atTop){ const b=obounds(), yE=atTop?b.miny:b.maxy, tol=Math.max(DEF_TH*1.6,scale*4);
+  const set=new Set([Math.round(b.minx),Math.round(b.maxx)]);
+  const check=(a,c,add)=>{ if(Math.abs(a.x-c.x)<Math.abs(a.y-c.y)){ const y0=Math.min(a.y,c.y),y1=Math.max(a.y,c.y);
+    if(atTop?Math.abs(y0-yE)<tol:Math.abs(y1-yE)<tol) set.add(add); } };
+  for(let i=0;i<S.outline.length;i++){ const a=S.outline[i],c=S.outline[(i+1)%S.outline.length]; check(a,c,Math.round(a.x)); }
+  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++){ const a=w.pts[j],c=w.pts[j+1]; check(a,c,Math.round((a.x+c.x)/2)); } });
+  return [...set].sort((a,b)=>a-b); }
+/* 좌/우 외곽변에 닿는 가로벽의 y */
+function edgeHorizontals(atLeft){ const b=obounds(), xE=atLeft?b.minx:b.maxx, tol=Math.max(DEF_TH*1.6,scale*4);
+  const set=new Set([Math.round(b.miny),Math.round(b.maxy)]);
+  const check=(a,c,add)=>{ if(Math.abs(a.y-c.y)<Math.abs(a.x-c.x)){ const x0=Math.min(a.x,c.x),x1=Math.max(a.x,c.x);
+    if(atLeft?Math.abs(x0-xE)<tol:Math.abs(x1-xE)<tol) set.add(add); } };
+  for(let i=0;i<S.outline.length;i++){ const a=S.outline[i],c=S.outline[(i+1)%S.outline.length]; check(a,c,Math.round(a.y)); }
+  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++){ const a=w.pts[j],c=w.pts[j+1]; check(a,c,Math.round((a.y+c.y)/2)); } });
+  return [...set].sort((a,b)=>a-b); }
 function drawDimensions(c,K){
-  if(S.outline.length<3)return;
-  const xs=gridX(), ys=gridY(), b=obounds(); if(xs.length<2||ys.length<2)return;
-  const g1=44*K, g2=92*K, ext=8*K;
-  // 상단: 세로 격자선 → 보조선 + 구간(내경) 치수
-  const yT=b.miny-g1;
-  xs.forEach(x=>el('line',{x1:x,y1:b.miny,x2:x,y2:yT-ext,stroke:'var(--dim-line)','stroke-width':.8*K},svg));
-  for(let i=0;i<xs.length-1;i++) dimBar({x:xs[i],y:yT},{x:xs[i+1],y:yT}, Math.max(0,xs[i+1]-xs[i]-DEF_TH), {t:'gx',i}, K);
-  dimBar({x:xs[0],y:b.miny-g2},{x:xs[xs.length-1],y:b.miny-g2}, xs[xs.length-1]-xs[0]-DEF_TH, {t:'tot'}, K);
-  // 좌측: 가로 격자선
-  const xL=b.minx-g1;
-  ys.forEach(y=>el('line',{x1:b.minx,y1:y,x2:xL-ext,y2:y,stroke:'var(--dim-line)','stroke-width':.8*K},svg));
-  for(let i=0;i<ys.length-1;i++) dimBar({x:xL,y:ys[i]},{x:xL,y:ys[i+1]}, Math.max(0,ys[i+1]-ys[i]-DEF_TH), {t:'gy',i}, K);
-  dimBar({x:b.minx-g2,y:ys[0]},{x:b.minx-g2,y:ys[ys.length-1]}, ys[ys.length-1]-ys[0]-DEF_TH, {t:'tot'}, K);
+  if(S.outline.length<3)return; const b=obounds(), g1=46*K, g2=94*K;
+  const topX=edgeVerticals(true), botX=edgeVerticals(false), leftY=edgeHorizontals(true), rightY=edgeHorizontals(false);
+  dimRun(topX,'x',b.miny-g1,b.miny,K,'top');   dimTotal(topX,'x',b.miny-g2,K);
+  dimRun(botX,'x',b.maxy+g1,b.maxy,K,'bot');   dimTotal(botX,'x',b.maxy+g2,K);
+  dimRun(leftY,'y',b.minx-g1,b.minx,K,'left'); dimTotal(leftY,'y',b.minx-g2,K);
+  dimRun(rightY,'y',b.maxx+g1,b.maxx,K,'right'); dimTotal(rightY,'y',b.maxx+g2,K);
 }
-function dimBar(a,b,val,ref,K){
+function dimRun(coords,axis,pos,wallEdge,K,side){ const t=DEF_TH;
+  for(let i=0;i<coords.length-1;i++){ const a=coords[i],b2=coords[i+1],inner=b2-a-t; if(inner<=1)continue;
+    let p1,p2; if(axis==='x'){p1={x:a+t/2,y:pos};p2={x:b2-t/2,y:pos};} else {p1={x:pos,y:a+t/2};p2={x:pos,y:b2-t/2};}
+    dimBar(p1,p2,Math.round(inner),{t:'g'+axis,a,b:b2},K,axis,wallEdge,side); } }
+function dimTotal(coords,axis,pos,K){ if(coords.length<2)return; const t=DEF_TH,a=coords[0],b2=coords[coords.length-1],inner=b2-a-t;
+  let p1,p2; if(axis==='x'){p1={x:a+t/2,y:pos};p2={x:b2-t/2,y:pos};} else {p1={x:pos,y:a+t/2};p2={x:pos,y:b2-t/2};}
+  dimBar(p1,p2,Math.round(inner),{t:'tot'},K,axis,null,null); }
+function dimBar(p1,p2,val,ref,K,axis,wallEdge,side){
   const g=el('g',{},svg);
-  el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'var(--dim-line)','stroke-width':K},g);
-  arrow(g,a,b,K); arrow(g,b,a,K);
-  const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
-  const total=ref.t==='tot', active=!total&&sameRef(S.activeBox,ref);
-  const txt=val>0?String(val):'—', tw=(txt.length*8.5+16)*K, th=24*K;
-  const col=active?'var(--active)':(total?'var(--ink)':'var(--dim)');
-  const box=el('g',{},svg); if(!total){ box.dataset.box=JSON.stringify(ref); box.style.cursor='pointer'; }
-  el('rect',{x:mid.x-tw/2,y:mid.y-th/2,width:tw,height:th,rx:6*K,
-    fill:active?'var(--active)':'#fff',stroke:col,'stroke-width':(total?2:1.6)*K},box);
-  el('text',{x:mid.x,y:mid.y,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono',
-    'font-size':13*K,'font-weight':total?700:600,fill:active?'#fff':col},box).textContent=txt;
+  el('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:'var(--dim-line)','stroke-width':K},g);
+  arrow(g,p1,p2,K); arrow(g,p2,p1,K);
+  const pos = axis==='x'? p1.y : p1.x;
+  if(wallEdge!=null){ const beyond=pos+(pos<wallEdge?-1:1)*9*K;   // 보조선: 벽 → 치수선 너머까지
+    if(axis==='x'){ el('line',{x1:p1.x,y1:wallEdge,x2:p1.x,y2:beyond,stroke:'var(--dim-line)','stroke-width':.8*K},g);
+      el('line',{x1:p2.x,y1:wallEdge,x2:p2.x,y2:beyond,stroke:'var(--dim-line)','stroke-width':.8*K},g); }
+    else { el('line',{x1:wallEdge,y1:p1.y,x2:beyond,y2:p1.y,stroke:'var(--dim-line)','stroke-width':.8*K},g);
+      el('line',{x1:wallEdge,y1:p2.y,x2:beyond,y2:p2.y,stroke:'var(--dim-line)','stroke-width':.8*K},g); } }
+  const mid={x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2}, total=ref.t==='tot', txt=val>0?String(val):'—';
+  if(total){ const tw=(txt.length*8.5+16)*K,th=24*K;
+    el('rect',{x:mid.x-tw/2,y:mid.y-th/2,width:tw,height:th,rx:6*K,fill:'#fff',stroke:'var(--ink)','stroke-width':2*K},g);
+    el('text',{x:mid.x,y:mid.y,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono','font-size':13*K,'font-weight':700,fill:'var(--ink)'},g).textContent=txt;
+    return; }
+  const active=sameRef(S.activeBox,ref), off=11*K; let tx,ty,rot=0;
+  if(axis==='x'){ tx=mid.x; ty=mid.y-off; } else { rot=-90; tx=mid.x+(side==='right'?off:-off); ty=mid.y; }
+  const tf=rot?`rotate(${rot} ${tx} ${ty})`:'', tw=(txt.length*8+8)*K, th=17*K;
+  if(active) el('rect',{x:tx-tw/2,y:ty-th/2,width:tw,height:th,rx:3*K,fill:'var(--active)',transform:tf},g);
+  el('text',{x:tx,y:ty,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono',
+    'font-size':13*K,'font-weight':600,fill:active?'#fff':'var(--dim)',transform:tf},g).textContent=txt;
+  const h=el('rect',{x:tx-15*K,y:ty-15*K,width:30*K,height:30*K,fill:'transparent'},g);
+  h.dataset.box=JSON.stringify(ref); h.style.cursor='pointer';
 }
-function segMM(ref){ if(ref.t==='gx'){ const xs=gridX(); return Math.max(0,xs[ref.i+1]-xs[ref.i]-DEF_TH); }
-  if(ref.t==='gy'){ const ys=gridY(); return Math.max(0,ys[ref.i+1]-ys[ref.i]-DEF_TH); } return 0; }
+function segMM(ref){ if(ref.t==='gx'||ref.t==='gy')return Math.max(0,ref.b-ref.a-DEF_TH); return 0; }
 function shiftX(fromX,d){ const e=1; S.outline.forEach(v=>{if(v.x>=fromX-e)v.x+=d;}); S.interiors.forEach(w=>w.pts.forEach(v=>{if(v.x>=fromX-e)v.x+=d;})); }
 function shiftY(fromY,d){ const e=1; S.outline.forEach(v=>{if(v.y>=fromY-e)v.y+=d;}); S.interiors.forEach(w=>w.pts.forEach(v=>{if(v.y>=fromY-e)v.y+=d;})); }
-function applyGrid(ref,innerMM){
-  if(ref.t==='gx'){ const xs=gridX(); shiftX(xs[ref.i+1], (innerMM+DEF_TH)-(xs[ref.i+1]-xs[ref.i])); }
-  else if(ref.t==='gy'){ const ys=gridY(); shiftY(ys[ref.i+1], (innerMM+DEF_TH)-(ys[ref.i+1]-ys[ref.i])); }
-}
+function applyGrid(ref,innerMM){ const delta=(innerMM+DEF_TH)-(ref.b-ref.a);
+  if(ref.t==='gx')shiftX(ref.b,delta); else if(ref.t==='gy')shiftY(ref.b,delta); }
 
 
 function updatePaperLbl(){ document.getElementById('paperLbl').textContent=paperSize+' · 1:'+scale; }
@@ -377,13 +407,22 @@ function snapEnd(p,ignore){
   S.outline.forEach(tryV); S.interiors.forEach((w,si)=>{ if(si===ignore)return; w.pts.forEach(tryV); });
   return best? {pt:best.pt,hit:true} : {pt:p,hit:false};
 }
-/* 끝 연결 + 어디에도 안 닿는 뜬 자투리 벽 제거 */
+/* 점이 외곽 안인지 */
+function pointInPoly(p,poly){ let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  if(((poly[i].y>p.y)!==(poly[j].y>p.y)) && (p.x<(poly[j].x-poly[i].x)*(p.y-poly[i].y)/((poly[j].y-poly[i].y)||1e-9)+poly[i].x)) c=!c; } return c; }
+/* 외곽 밖이면 가장 가까운 외곽선에 투영 */
+function clampToOutline(p){ if(S.outline.length<3||pointInPoly(p,S.outline))return p;
+  let best=null; const n=S.outline.length;
+  for(let i=0;i<n;i++){ const r=distToSeg(p,S.outline[i],S.outline[(i+1)%n]); if(!best||r.d<best.d)best=r; }
+  return best?best.proj:p; }
+/* 끝 연결 + 외곽 클램프 + 뜬 자투리 제거 */
 function snapInteriorEnds(){ const keep=[];
   S.interiors.forEach((w,si)=>{ if(w.pts.length<2)return;
+    w.pts=w.pts.map(v=>clampToOutline(v));           // 삐져나간 점 외곽 안으로
     const r0=snapEnd(w.pts[0],si), r1=snapEnd(w.pts[w.pts.length-1],si);
     w.pts[0]=r0.pt; w.pts[w.pts.length-1]=r1.pt;
-    const floating = !r0.hit && !r1.hit;                 // 양 끝 모두 미연결
-    if(floating && chainLen(w.pts) < Math.max(2000,scale*40)) return;  // 뜬 자투리 → 버림
+    const floating = !r0.hit && !r1.hit;
+    if(floating && chainLen(w.pts) < Math.max(2000,scale*40)) return;
     keep.push(w); });
   S.interiors=keep;
 }
@@ -413,9 +452,13 @@ function snapToWalls(p,ignore){ let best=null;const R=Math.max(500,scale*12);
 
 function convert(){
   const strokes=S.cur?S.strokes.concat([S.cur]):S.strokes.slice();
-  if(!strokes.length){ flash('먼저 벽 모양을 그려주세요'); return; }
+  if(!strokes.length){
+    if(S.outline.length>=3){ setMode('edit'); centerContent(); fitContent(); return; }  // 새로 안 그렸으면 기존 도면 유지
+    flash('먼저 벽 모양을 그려주세요'); return;
+  }
   pushHist();
-  let outlineDone=!!S.outline.length; const newIn=[];
+  S.outline=[]; S.outlineMM=[]; S.outlineTh=[]; S.interiors=[];   // ★ 기존 도면 교체(오버랩 방지)
+  let outlineDone=false; const newIn=[];
   strokes.forEach(st=>{
     let sp=rdp(st,Math.max(150,scale*4));
     const closed=sp.length>=4 && dist(sp[0],sp[sp.length-1])<Math.max(600,scale*14) && chainLen(sp)>Math.max(1500,scale*30);
@@ -430,13 +473,17 @@ function convert(){
   cleanupOutline();                          // 3) 외곽 삐침/일직선 정리
   if(S.ortho){ rectifyOutline(); cleanupOutline(); rectifyOutline(); }  // 3b) 직각화 반복 수렴
   snapInteriorEnds();                        // 4) 내부벽 끝 연결 + 뜬 자투리 제거
-  // 치수/두께 배열 정합
   S.outlineMM=new Array(S.outline.length).fill(0); S.outlineTh=new Array(S.outline.length).fill(DEF_TH);
   S.interiors.forEach(w=>{ const seg=Math.max(0,w.pts.length-1);
     w.mm=new Array(seg).fill(0); w.th=new Array(seg).fill(DEF_TH); });
   S.strokes=[];S.cur=null;S.activeBox=null;S.selWall=null;
+  centerContent();                           // ★ 용지 중앙 배치
   setMode('edit'); fitContent(); flash('정리됨 · 안 맞는 코너는 끌어서 맞추면 돼요');
 }
+/* 도면을 용지 중앙으로 이동 */
+function centerContent(){ if(S.outline.length<3)return;
+  const b=obounds(), tx=paperW()/2-(b.minx+b.maxx)/2, ty=paperH()/2-(b.miny+b.maxy)/2;
+  S.outline.forEach(v=>{v.x+=tx;v.y+=ty;}); S.interiors.forEach(w=>w.pts.forEach(v=>{v.x+=tx;v.y+=ty;})); }
 function chainLen(pts){ let s=0;for(let i=0;i<pts.length-1;i++)s+=dist(pts[i],pts[i+1]);return s; }
 
 /* =========================================================================
@@ -469,7 +516,7 @@ svg.addEventListener('pointermove',e=>{
 svg.addEventListener('pointerup',e=>{
   const single=pointers.size===1; pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; if(!single)return;
   if(S.mode==='sketch'){ if(S.cur&&S.cur.length>=2){ pushHist(); S.strokes.push(S.cur); } S.cur=null;
-    document.getElementById('btnConvert').disabled=!S.strokes.length; render(); return; }
+    document.getElementById('btnConvert').disabled=!(S.strokes.length||S.outline.length); render(); return; }
   if(dragV){ finalizeDrag(dragV); dragV=null; render(); return; }
   if(pend){ cancelLP();
     if(!lpFired){ if(pend.kind==='box') toggleActiveBox(pend.ref); else selectWallTh(pend.ref); }
@@ -509,15 +556,14 @@ function toggleActiveBox(ref){ if(sameRef(S.activeBox,ref)) S.activeBox=null; el
 function getMM(ref){ return segMM(ref); }
 function applyMeasure(ref,mm){ pushHist(); applyGrid(ref,mm); S.activeBox=null; render(); }
 
-const thbar=document.getElementById('thbar'),tbName=document.getElementById('tbName'),thVal=document.getElementById('thVal');
+const thbar=document.getElementById('thbar'),tbName=document.getElementById('tbName'),thInput=document.getElementById('thInput');
 function selectWallTh(ref){ S.selWall=ref; S.activeBox=null; render();
-  tbName.textContent=ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽'; thVal.textContent=DEF_TH; thbar.classList.add('open'); syncZoombar(); }
+  tbName.textContent=ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽'; thInput.value=DEF_TH; thbar.classList.add('open'); syncZoombar(); }
 function closeTh(){ thbar.classList.remove('open'); syncZoombar(); }
 function syncZoombar(){ document.documentElement.style.setProperty('--dimh',
   (thbar.classList.contains('open'))?(thbar.offsetHeight+'px'):'0px'); }
 document.getElementById('tbClose').onclick=()=>{ S.selWall=null; closeTh(); render(); };
-document.getElementById('thMinus').onclick=()=>flash('※ 벽두께 개별조정은 다음 단계에서 (현재 전 벽 '+DEF_TH+')');
-document.getElementById('thPlus').onclick=()=>flash('※ 벽두께 개별조정은 다음 단계에서 (현재 전 벽 '+DEF_TH+')');
+thInput.oninput=()=>{ const v=parseInt(thInput.value); if(v>=40&&v<=500){ DEF_TH=v; render(); } };
 
 /* 숫자패드 */
 const numpad=document.getElementById('numpad'),npVal=document.getElementById('npVal'),npHead=document.getElementById('npHead'),npGrid=document.getElementById('npGrid');
@@ -550,7 +596,7 @@ function fitContent(){ const pts=contentPts(); if(pts.length<2){ fitPaper(); ret
 
 function setMode(m){ S.mode=m;
   document.getElementById('btnSketch').classList.toggle('primary',m==='sketch');
-  document.getElementById('btnConvert').disabled=!(m==='sketch'&&(S.strokes.length||S.cur));
+  document.getElementById('btnConvert').disabled=!(m==='sketch'&&(S.strokes.length||S.cur||S.outline.length));
   if(m==='sketch'){ S.activeBox=null;S.selWall=null;closeTh();closeNumpad(); } render(); }
 document.getElementById('btnSketch').onclick=()=>{ setMode('sketch'); flash('벽 모양을 손으로 슥 · 외곽은 닫고 칸막이는 열어서'); };
 document.getElementById('btnConvert').onclick=convert;
@@ -562,10 +608,33 @@ document.getElementById('btnClear').onclick=()=>{ if(!confirm('전체 지울까�
   closeTh();closeNumpad(); setMode('sketch'); fitPaper(); };
 document.getElementById('btnExport').onclick=exportDXF;
 
+/* 파일 저장 / 불러오기 (.json) */
+function saveFile(){
+  const data={app:'ballo',v:1,paperSize,scale,outline:S.outline,outlineTh:S.outlineTh,
+    interiors:S.interiors.map(w=>({pts:w.pts}))};
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url; a.download='ballo_도면_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url); flash('저장됨');
+}
+function loadFile(file){ const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); pushHist();
+    paperSize=(d.paperSize==='A4')?'A4':'A3'; scale=SCALES.includes(+d.scale)?+d.scale:60;
+    S.outline=d.outline||[]; S.outlineTh=d.outlineTh||S.outline.map(()=>DEF_TH);
+    S.outlineMM=S.outline.map(()=>0);
+    S.interiors=(d.interiors||[]).map(w=>({pts:w.pts,mm:new Array(Math.max(0,w.pts.length-1)).fill(0),th:new Array(Math.max(0,w.pts.length-1)).fill(DEF_TH)}));
+    S.strokes=[];S.cur=null;S.activeBox=null;S.selWall=null;
+    document.getElementById('selSize').value=paperSize; document.getElementById('selScale').value=scale;
+    setMode('edit'); fitContent(); flash('불러왔어요');
+  }catch(e){ flash('파일을 읽을 수 없어요'); } };
+  r.readAsText(file);
+}
+document.getElementById('btnSave').onclick=()=>{ if(S.outline.length<3){ flash('저장할 도면이 없어요'); return; } saveFile(); };
+document.getElementById('btnOpen').onclick=()=>document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange=e=>{ if(e.target.files[0])loadFile(e.target.files[0]); e.target.value=''; };
+
 const selSize=document.getElementById('selSize'),selScale=document.getElementById('selScale');
 SCALES.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent='1:'+s; if(s===60)o.selected=true; selScale.appendChild(o); });
-selSize.onchange=()=>{ paperSize=selSize.value; fitPaper(); flash('용지 '+paperSize); };
-selScale.onchange=()=>{ scale=+selScale.value; fitPaper(); flash('스케일 1:'+scale); };
+selSize.onchange=()=>{ paperSize=selSize.value; centerContent(); fitPaper(); flash('용지 '+paperSize); };
+selScale.onchange=()=>{ scale=+selScale.value; centerContent(); fitPaper(); flash('스케일 1:'+scale); };
 
 const hintEl=document.getElementById('hint'); let flashT=null;
 function updateHint(){ let m;
@@ -579,19 +648,32 @@ function flash(t){ hintEl.innerHTML=t; clearTimeout(flashT); flashT=setTimeout(u
    ========================================================================= */
 function exportDXF(){ if(S.outline.length<3){ flash('먼저 평면도를 만들어주세요'); return; }
   const all=contentPts(),minx=Math.min(...all.map(p=>p.x)),maxy=Math.max(...all.map(p=>p.y));
-  const X=v=>Math.round(v.x-minx),Y=v=>Math.round(maxy-v.y);
-  let d='0\nSECTION\n2\nENTITIES\n';
-  const out=offsetPoly(S.outline,DEF_TH/2), inn=offsetPoly(S.outline,-DEF_TH/2);
-  const poly=(pts,layer,closed)=>{ d+='0\nLWPOLYLINE\n8\n'+layer+'\n90\n'+pts.length+'\n70\n'+(closed?1:0)+'\n'; pts.forEach(v=>{d+='10\n'+X(v)+'\n20\n'+Y(v)+'\n';}); };
-  poly(out,'WALL',true); poly(inn,'WALL',true);
-  S.interiors.forEach(w=>poly(w.pts,'INNER',false));
-  const addDim=(a,b,mm,inner)=>{ const len=mm||(inner?innerMM(a,b):Math.round(dist(a,b)));
-    d+='0\nTEXT\n8\nDIM\n10\n'+Math.round((X(a)+X(b))/2)+'\n20\n'+Math.round((Y(a)+Y(b))/2)+'\n40\n120\n1\n'+len+'\n'; };
-  for(let i=0;i<S.outline.length;i++) addDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i],true);
-  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) addDim(w.pts[j],w.pts[j+1],w.mm[j],false); });
-  d+='0\nENDSEC\n0\nEOF\n';
+  const X=v=>+(v.x-minx).toFixed(1), Y=v=>+(maxy-v.y).toFixed(1);
+  const lines=[], texts=[];
+  const pushPoly=(pts,layer,closed)=>{ const lim=closed?pts.length:pts.length-1;
+    for(let i=0;i<lim;i++){ const a=pts[i],b=pts[(i+1)%pts.length]; lines.push({layer,x1:X(a),y1:Y(a),x2:X(b),y2:Y(b)}); } };
+  pushPoly(offsetPoly(S.outline,DEF_TH/2),'WALL',true);
+  pushPoly(offsetPoly(S.outline,-DEF_TH/2),'WALL',true);
+  S.interiors.forEach(w=>{ if(w.pts.length<2)return; const c=trimInner(w.pts);
+    pushPoly(offsetOpen(c,DEF_TH/2),'INNER',false); pushPoly(offsetOpen(c,-DEF_TH/2),'INNER',false); });
+  // 치수 텍스트 (구간 내경)
+  const xs=gridX(),ys=gridY(),b=obounds();
+  for(let i=0;i<xs.length-1;i++){ const v=Math.round(xs[i+1]-xs[i]-DEF_TH); if(v>0)
+    texts.push({x:(X({x:xs[i]})+X({x:xs[i+1]}))/2,y:Y({y:b.miny})+400,s:''+v}); }
+  for(let i=0;i<ys.length-1;i++){ const v=Math.round(ys[i+1]-ys[i]-DEF_TH); if(v>0)
+    texts.push({x:X({x:b.minx})-800,y:(Y({y:ys[i]})+Y({y:ys[i+1]}))/2,s:''+v}); }
+  // ── 유효한 R12 DXF 조립 ──
+  let d=''; const g=(c,v)=>{ d+=c+'\n'+v+'\n'; };
+  g(0,'SECTION');g(2,'HEADER');g(9,'$ACADVER');g(1,'AC1009');g(9,'$INSUNITS');g(70,4);g(0,'ENDSEC');
+  g(0,'SECTION');g(2,'TABLES');g(0,'TABLE');g(2,'LAYER');g(70,4);
+  [['0',7],['WALL',7],['INNER',8],['DIM',3]].forEach(([nm,col])=>{ g(0,'LAYER');g(2,nm);g(70,0);g(62,col);g(6,'CONTINUOUS'); });
+  g(0,'ENDTAB');g(0,'ENDSEC');
+  g(0,'SECTION');g(2,'ENTITIES');
+  lines.forEach(L=>{ g(0,'LINE');g(8,L.layer);g(10,L.x1);g(20,L.y1);g(30,0);g(11,L.x2);g(21,L.y2);g(31,0); });
+  texts.forEach(T=>{ g(0,'TEXT');g(8,'DIM');g(10,+T.x.toFixed(1));g(20,+T.y.toFixed(1));g(30,0);g(40,250);g(1,T.s); });
+  g(0,'ENDSEC');g(0,'EOF');
   const blob=new Blob([d],{type:'application/dxf'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='kcc_실측도면_'+Date.now()+'.dxf';a.click();URL.revokeObjectURL(url);flash('DXF 저장됨');
+  a.href=url;a.download='ballo_도면_'+Date.now()+'.dxf';a.click();URL.revokeObjectURL(url);flash('DXF 저장됨');
 }
 
 /* =========================================================================
@@ -626,6 +708,7 @@ async function connect(){ if(!navigator.bluetooth){ stat('err','Web Bluetooth �
     laser.char.addEventListener('characteristicvaluechanged',e=>onRaw(e.target.value));
     await laser.char.writeValueWithResponse(BOSCH.enableCmd);
     laser.connected=true; stat('on','연결됨 · '+(laser.device.name||'GLM')); lg('✔ 준비 완료 — 치수박스 탭 후 측정');
+    setTimeout(()=>pop.classList.remove('open'),900);   // 연결되면 페어링 화면 닫기
   }catch(err){ if(err.name==='NotFoundError'){stat('off','선택 취소');lg('· 취소');}else{stat('err','연결 실패');lg('✖ '+err.message);} } }
 function onRaw(dv){ const hex=[...new Uint8Array(dv.buffer)].map(b=>b.toString(16).padStart(2,'0')).join(' ');lg('◀ '+hex);
   let mm=null;try{mm=BOSCH.parse(dv);}catch(e){}
