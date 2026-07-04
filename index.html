@@ -9,12 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#EEF1F5; --panel:#FFFFFF; --ink:#141821; --muted:#6B7686;
-    --line:#D7DDE6; --grid:#E1E5EC; --grid-strong:#CFD6E0;
-    --wall:#232C3A; --wall-fill:#FBFCFE; --inner:#4A5568;
-    --measured:#0E7C66; --unmeasured:#C2410C;
-    --sel:#1D6FE0; --accent:#E1251B;
-    --dim:#5A6472; --dim-line:#9AA4B2;
+    --bg:#DFE3EA; --paper:#FFFFFF; --panel:#FFFFFF; --ink:#141821; --muted:#6B7686;
+    --line:#D7DDE6; --grid:#EEF1F6; --grid-strong:#E2E7EF;
+    --wall:#232C3A; --inner:#3B4658;
+    --measured:#0E7C66; --unmeasured:#C2410C; --active:#0E9F6E;
+    --sel:#1D6FE0; --accent:#E1251B; --dim-line:#9AA4B2;
     --shadow:0 10px 34px rgba(20,30,50,.16);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
@@ -24,13 +23,11 @@
   .mono{font-family:"IBM Plex Mono",monospace;}
 
   header{height:54px;flex:0 0 54px;background:var(--panel);border-bottom:1px solid var(--line);
-    display:flex;align-items:center;gap:7px;padding:0 12px;z-index:40;overflow-x:auto;}
-  .brand{display:flex;align-items:center;gap:9px;margin-right:4px;flex:0 0 auto;}
+    display:flex;align-items:center;gap:6px;padding:0 10px;z-index:40;overflow-x:auto;}
+  .brand{display:flex;align-items:center;gap:8px;margin-right:2px;flex:0 0 auto;}
   .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--accent);}
-  .brand b{font-weight:700;font-size:15px;letter-spacing:-.2px;white-space:nowrap;}
-  .brand span{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;}
-  .spacer{flex:1 0 8px;}
-  .btn{height:38px;padding:0 13px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  .brand b{font-weight:700;font-size:14px;letter-spacing:-.2px;white-space:nowrap;}
+  .btn{height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
     color:var(--ink);font-family:inherit;font-weight:600;font-size:13px;white-space:nowrap;
     display:inline-flex;align-items:center;gap:6px;cursor:pointer;flex:0 0 auto;}
   .btn:active{transform:translateY(1px);}
@@ -40,68 +37,60 @@
   .btn.warn{color:var(--accent);border-color:#F0CBC8;}
   .btn.icon{width:38px;padding:0;justify-content:center;font-size:17px;}
   .btn:disabled{opacity:.4;pointer-events:none;}
+  select{height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+    font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;padding:0 6px;color:var(--ink);flex:0 0 auto;}
+  .spacer{flex:1 0 6px;}
 
   .stage{flex:1;position:relative;min-height:0;}
   svg#plan{width:100%;height:100%;display:block;background:var(--bg);touch-action:none;}
-  @keyframes blink{0%,100%{opacity:.9}50%{opacity:.15}}
+  @keyframes blink{0%,100%{opacity:.85}50%{opacity:.2}}
   .blink{animation:blink 1s ease-in-out infinite;}
 
-  .hint{position:absolute;left:50%;top:14px;transform:translateX(-50%);
-    background:rgba(20,24,33,.92);color:#fff;padding:8px 15px;border-radius:22px;
-    font-size:12.5px;font-weight:600;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:var(--shadow);}
+  .hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);
+    background:rgba(20,24,33,.92);color:#fff;padding:7px 14px;border-radius:22px;
+    font-size:12px;font-weight:600;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:var(--shadow);}
   .hint b{color:#89B4FF;}
-
-  .scalebar{position:absolute;left:14px;top:14px;z-index:20;background:rgba(255,255,255,.9);
-    border:1px solid var(--line);border-radius:8px;padding:6px 9px;display:flex;align-items:center;gap:8px;
-    box-shadow:0 2px 8px rgba(20,30,50,.08);}
-  .scalebar .bar{height:8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);}
-  .scalebar span{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--ink);}
+  .paperlbl{position:absolute;left:14px;top:12px;z-index:20;background:rgba(255,255,255,.9);
+    border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;font-weight:600;color:var(--ink);box-shadow:0 2px 8px rgba(20,30,50,.08);}
 
   .zoombar{position:absolute;right:14px;bottom:calc(14px + var(--dimh,0px));display:flex;flex-direction:column;
     gap:7px;z-index:20;transition:bottom .2s;}
   .zoombar .btn{width:44px;height:44px;justify-content:center;font-size:20px;box-shadow:var(--shadow);}
 
-  /* 선택 바 */
-  .selbar{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+  .thbar{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
     box-shadow:0 -8px 26px rgba(20,30,50,.10);z-index:30;padding:11px 14px calc(11px + env(safe-area-inset-bottom));
-    transform:translateY(120%);transition:transform .24s cubic-bezier(.4,0,.2,1);
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  .selbar.open{transform:translateY(0);}
-  .selbar .lab{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;}
-  .selbar .lab .sq{width:15px;height:15px;border-radius:3px;background:var(--sel);}
-  .selbar .dimbtn{height:48px;padding:0 16px;border-radius:12px;border:1.5px solid var(--sel);background:#EEF4FF;
-    color:#1B4ED8;font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:20px;cursor:pointer;display:flex;align-items:center;gap:6px;}
-  .selbar .dimbtn small{font-size:12px;color:var(--muted);font-weight:600;}
+    transform:translateY(120%);transition:transform .24s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .thbar.open{transform:translateY(0);}
+  .thbar .lab{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;}
+  .thbar .lab .sq{width:15px;height:15px;border-radius:3px;background:var(--sel);}
   .th{display:flex;align-items:center;gap:8px;background:#F4F6F9;border:1px solid var(--line);border-radius:12px;padding:5px 8px;}
   .th .t{font-size:11px;font-weight:700;color:var(--muted);}
-  .th button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:18px;font-weight:700;cursor:pointer;color:var(--ink);}
-  .th .v{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:16px;min-width:42px;text-align:center;}
-  .selbar .grow{flex:1 0 8px;}
+  .th button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:19px;font-weight:700;cursor:pointer;color:var(--ink);}
+  .th .v{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:17px;min-width:52px;text-align:center;}
+  .thbar .grow{flex:1 0 8px;}
 
-  /* 숫자패드 */
-  .numpad{position:absolute;left:50%;bottom:16px;transform:translate(-50%,140%);width:280px;max-width:calc(100vw - 24px);
-    background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);z-index:50;
-    padding:12px;transition:transform .22s cubic-bezier(.4,0,.2,1);}
+  .numpad{position:absolute;left:50%;bottom:16px;transform:translate(-50%,140%);width:284px;max-width:calc(100vw - 24px);
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);z-index:50;padding:12px;
+    transition:transform .22s cubic-bezier(.4,0,.2,1);}
   .numpad.open{transform:translate(-50%,0);}
   .np-head{font-size:12px;font-weight:700;color:var(--muted);margin:2px 2px 8px;display:flex;justify-content:space-between;align-items:center;}
-  .np-val{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:600;text-align:right;padding:6px 12px;
-    background:#F1F4F9;border-radius:10px;margin-bottom:10px;min-height:48px;}
+  .np-val{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:600;text-align:right;padding:6px 12px;background:#F1F4F9;border-radius:10px;margin-bottom:10px;min-height:48px;}
   .np-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-  .np-grid button{height:52px;border-radius:12px;border:1px solid var(--line);background:#fff;
-    font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .np-grid button{height:52px;border-radius:12px;border:1px solid var(--line);background:#fff;font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;cursor:pointer;color:var(--ink);}
   .np-grid button:active{background:#EEF2F7;}
   .np-grid .ok{background:var(--sel);color:#fff;border-color:var(--sel);}
   .np-grid .del{background:#FFF3F2;color:var(--accent);border-color:#F0CBC8;font-size:18px;}
 
-  .laser-pop{position:absolute;top:60px;right:12px;width:320px;max-width:calc(100vw - 24px);
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:60;padding:14px;display:none;}
+  .laser-pop{position:absolute;top:60px;right:12px;width:320px;max-width:calc(100vw - 24px);background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:60;padding:14px;display:none;}
   .laser-pop.open{display:block;}
   .laser-pop h4{margin:0 0 8px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
   .laser-pop .st{font-size:12px;font-weight:600;margin-bottom:10px;}
   .st.off{color:var(--muted);} .st.on{color:var(--measured);} .st.err{color:var(--accent);}
   .laser-pop .val{font-family:"IBM Plex Mono",monospace;font-size:28px;font-weight:600;text-align:center;padding:10px;background:#F1F4F9;border-radius:10px;margin:10px 0;}
   .laser-pop .val small{font-size:14px;color:var(--muted);}
-  .laser-pop .log{font-family:"IBM Plex Mono",monospace;font-size:9.5px;background:#0E1116;color:#8FE3B0;border-radius:8px;padding:8px;height:64px;overflow-y:auto;white-space:pre-wrap;line-height:1.45;margin-top:8px;}
+  .laser-pop .log{font-family:"IBM Plex Mono",monospace;font-size:9.5px;background:#0E1116;color:#8FE3B0;border-radius:8px;padding:8px;height:60px;overflow-y:auto;white-space:pre-wrap;line-height:1.45;margin-top:8px;}
   .switch{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;}
   .switch input{width:40px;height:22px;}
   ::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#C3CBD6;border-radius:8px;}
@@ -110,40 +99,40 @@
 <body>
 
 <header>
-  <div class="brand"><span class="dot"></span><b>KCC 실측</b><span>· 평면도</span></div>
-  <button class="btn primary" id="btnSketch">✎ 손으로 그리기</button>
-  <button class="btn go" id="btnConvert" disabled>→ 도면 변환</button>
-  <button class="btn on" id="btnOrtho">⊾ 직각보정 30°</button>
+  <div class="brand"><span class="dot"></span><b>KCC 실측</b></div>
+  <button class="btn primary" id="btnSketch">✎ 그리기</button>
+  <button class="btn go" id="btnConvert" disabled>→ 변환</button>
+  <button class="btn on" id="btnOrtho">⊾ 30°</button>
+  <select id="selSize"><option value="A3">A3</option><option value="A4">A4</option></select>
+  <select id="selScale"></select>
   <div class="spacer"></div>
-  <button class="btn" id="btnLaser">📡 레이저</button>
+  <button class="btn" id="btnLaser">📡</button>
   <button class="btn" id="btnExport">DXF</button>
   <button class="btn warn icon" id="btnUndo" title="되돌리기">↶</button>
-  <button class="btn warn" id="btnClear">지우기</button>
+  <button class="btn warn icon" id="btnClear" title="지우기">🗑</button>
 </header>
 
 <div class="stage">
   <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
   <div class="hint" id="hint"></div>
-  <div class="scalebar"><div class="bar" id="scaleLine"></div><span id="scaleLabel">1000mm</span></div>
+  <div class="paperlbl" id="paperLbl">A3 · 1:50</div>
   <div class="zoombar">
     <button class="btn icon" id="zIn">＋</button>
     <button class="btn icon" id="zOut">－</button>
-    <button class="btn icon" id="zFit" title="화면 맞춤">⤢</button>
+    <button class="btn icon" id="zFit" title="용지 맞춤">⤢</button>
   </div>
 
-  <!-- 선택 바 -->
-  <div class="selbar" id="selbar">
-    <div class="lab"><span class="sq"></span><span id="sbName">벽</span></div>
-    <button class="dimbtn" id="sbDim"><span id="sbDimVal">—</span><small>mm</small></button>
+  <!-- 벽체 두께 바 -->
+  <div class="thbar" id="thbar">
+    <div class="lab"><span class="sq"></span><span id="tbName">벽체</span></div>
     <div class="th"><span class="t">벽두께</span><button id="thMinus">−</button><span class="v" id="thVal">180</span><button id="thPlus">＋</button></div>
     <div class="grow"></div>
-    <button class="btn on" id="sbLaser">📡 레이저</button>
-    <button class="btn icon" id="sbClose">✕</button>
+    <button class="btn icon" id="tbClose">✕</button>
   </div>
 
   <!-- 숫자패드 -->
   <div class="numpad" id="numpad">
-    <div class="np-head"><span id="npHead">치수 입력</span><span class="mono" style="color:var(--muted)">mm</span></div>
+    <div class="np-head"><span id="npHead">치수(내경) 입력</span><span class="mono" style="color:var(--muted)">mm</span></div>
     <div class="np-val" id="npVal">0</div>
     <div class="np-grid" id="npGrid"></div>
   </div>
@@ -153,33 +142,34 @@
 
 <script>
 /* =========================================================================
-   KCC 평면도 v3 — 손보정 · 벽두께 · 캐드식 치수
+   KCC 평면도 v4 — 좌표계 = 실측 mm, 용지(A3/A4)+스케일 캔버스
    ========================================================================= */
 const svg=document.getElementById('plan');
 const NS='http://www.w3.org/2000/svg';
-const GRID=40, PX_PER_MM=0.06;
-let vb={x:0,y:0,w:1600,h:1000};
+let vb={x:0,y:0,w:1000,h:700};
 
-const DEF_TH_OUT=180, DEF_TH_IN=100;   // 기본 벽두께(mm)
-const SNAP_DEG=30;                     // 이 각도 이내면 직각으로 스냅
+const PAPER={A3:{w:420,h:297},A4:{w:297,h:210}};   // mm (가로방향)
+const SCALES=[10,20,30,40,50,60,80,100,150];
+let paperSize='A3', scale=60;
+const DEF_TH=180, SNAP_DEG=30;
+function paperW(){ return PAPER[paperSize].w*scale; }   // 실측 mm 영역
+function paperH(){ return PAPER[paperSize].h*scale; }
 
-const S={
-  mode:'sketch', ortho:true,
-  strokes:[], cur:null,
-  outline:[], outlineMM:[], outlineTh:[],
-  interiors:[],                        // {pts, mm[], th[]}
-  sel:null,
-};
+const S={ mode:'sketch', ortho:true, strokes:[], cur:null,
+  outline:[], outlineMM:[], outlineTh:[], interiors:[],
+  activeBox:null, selWall:null };
+
 let history=[];
-function pushHist(){ history.push(JSON.stringify({o:S.outline,om:S.outlineMM,ot:S.outlineTh,in:S.interiors}));
-  if(history.length>60)history.shift(); }
+function pushHist(){ history.push(JSON.stringify({o:S.outline,om:S.outlineMM,ot:S.outlineTh,in:S.interiors,st:S.strokes}));
+  if(history.length>80)history.shift(); }
 function undo(){ if(!history.length){ flash('되돌릴 게 없어요'); return; }
   const h=JSON.parse(history.pop());
-  S.outline=h.o; S.outlineMM=h.om; S.outlineTh=h.ot||S.outline.map(()=>DEF_TH_OUT); S.interiors=h.in;
-  S.sel=null; closeSel(); closeNumpad();
-  if(!S.outline.length && !S.interiors.length && !S.strokes.length) setMode('sketch'); else render(); }
+  S.outline=h.o;S.outlineMM=h.om;S.outlineTh=h.ot;S.interiors=h.in;S.strokes=h.st||[];S.cur=null;
+  S.activeBox=null;S.selWall=null;closeTh();closeNumpad();
+  document.getElementById('btnConvert').disabled=!(S.mode==='sketch'&&S.strokes.length);
+  render(); }
 
-/* ---------- 기하 ---------- */
+/* ---------- 기하 (전부 실측 mm) ---------- */
 function toSvg(cx,cy){ const p=svg.createSVGPoint();p.x=cx;p.y=cy;
   const q=p.matrixTransform(svg.getScreenCTM().inverse());return {x:q.x,y:q.y}; }
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -191,124 +181,172 @@ function centroid(pts){ let x=0,y=0;pts.forEach(p=>{x+=p.x;y+=p.y;});return {x:x
 function distToSeg(p,a,b){ const dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy||1;
   let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/L2;t=Math.max(0,Math.min(1,t));
   const pr={x:a.x+t*dx,y:a.y+t*dy};return {d:dist(p,pr),t,proj:pr}; }
-const svPerPx=()=>vb.w/svg.clientWidth;
+const k=()=>vb.w/svg.clientWidth;   // 실측mm / 화면px  (요소 크기 보정용)
 
 /* =========================================================================
    렌더링
    ========================================================================= */
 function render(){
-  apply(); svg.innerHTML=''; drawGrid();
+  apply(); svg.innerHTML=''; drawPaper(); drawGrid();
+  const K=k();
 
   if(S.mode==='edit'){
     const c=S.outline.length?centroid(S.outline):{x:0,y:0};
-    // 벽체 (두께 2선 = 채운 밴드)
-    for(let i=0;i<S.outline.length;i++) drawWallBand(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineTh[i],'var(--wall)');
-    S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) drawWallBand(w.pts[j],w.pts[j+1],w.th[j],'var(--inner)'); });
-
-    // 선택 하이라이트(깜빡)
-    if(S.sel){ const s=selSeg(S.sel); if(s){ const h=el('line',{x1:s.a.x,y1:s.a.y,x2:s.b.x,y2:s.b.y,
-      stroke:'var(--sel)','stroke-width':Math.max(6,thOf(S.sel)*PX_PER_MM),'stroke-linecap':'butt'},svg); h.classList.add('blink'); } }
-
-    // 치수 (보조선 + 중앙 박스)
-    for(let i=0;i<S.outline.length;i++) drawDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i],c,{t:'o',w:i},34);
-    S.interiors.forEach((w,s)=>{ for(let j=0;j<w.pts.length-1;j++) drawDim(w.pts[j],w.pts[j+1],w.mm[j],c,{t:'in',s,w:j},22); });
-
-    // 정점
-    S.outline.forEach(v=>el('rect',{x:v.x-5,y:v.y-5,width:10,height:10,fill:'#fff',stroke:'var(--wall)','stroke-width':2},svg));
-    S.interiors.forEach(w=>w.pts.forEach((v,idx)=>{ const end=idx===0||idx===w.pts.length-1;
-      el('circle',{cx:v.x,cy:v.y,r:end?6:5,fill:end?'#FFF4E6':'#fff',stroke:'var(--inner)','stroke-width':2},svg); }));
+    // 벽체 2선 (외곽 = 안/밖 오프셋 폴리곤)
+    if(S.outline.length>=3){
+      const outer=offsetPoly(S.outline,DEF_TH/2), inner=offsetPoly(S.outline,-DEF_TH/2);
+      polyLine(outer,true,'var(--wall)',1.6*K); polyLine(inner,true,'var(--wall)',1.6*K);
+    }
+    // 내부벽 2선
+    S.interiors.forEach(w=>drawInner(w,K));
+    // 벽체 히트라인(중심선, 벽체 선택용)
+    for(let i=0;i<S.outline.length;i++) hitWall(S.outline[i],S.outline[(i+1)%S.outline.length],{t:'o',w:i},K);
+    S.interiors.forEach((w,s)=>{ for(let j=0;j<w.pts.length-1;j++) hitWall(w.pts[j],w.pts[j+1],{t:'in',s,w:j},K); });
+    // 벽체 선택 하이라이트
+    if(S.selWall){ const g=selSeg(S.selWall); if(g){ const h=el('line',{x1:g.a.x,y1:g.a.y,x2:g.b.x,y2:g.b.y,
+      stroke:'var(--sel)','stroke-width':DEF_TH,'stroke-linecap':'butt',opacity:.18},svg); } }
+    // 치수 (내경) + 박스
+    for(let i=0;i<S.outline.length;i++) drawDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i],c,{t:'o',w:i},34*K,true,K);
+    S.interiors.forEach((w,s)=>{ for(let j=0;j<w.pts.length-1;j++) drawDim(w.pts[j],w.pts[j+1],w.mm[j],c,{t:'in',s,w:j},22*K,false,K); });
   }
-
-  if(S.mode==='sketch'){ S.strokes.forEach(st=>strokePath(st,'#9AA4B2')); if(S.cur)strokePath(S.cur,'var(--accent)'); }
-  updateHint(); updateScale();
+  if(S.mode==='sketch'){ S.strokes.forEach(st=>strokePath(st,'#8A93A2',K)); if(S.cur)strokePath(S.cur,'var(--accent)',K); }
+  updatePaperLbl(); updateHint();
 }
-function drawGrid(){ const g=el('g',{},svg);
-  const x0=Math.floor(vb.x/GRID)*GRID,y0=Math.floor(vb.y/GRID)*GRID;
-  for(let x=x0;x<vb.x+vb.w;x+=GRID){ const s=Math.round(x/GRID)%5===0;
-    el('line',{x1:x,y1:vb.y,x2:x,y2:vb.y+vb.h,stroke:s?'var(--grid-strong)':'var(--grid)','stroke-width':s?1.2:1},g); }
-  for(let y=y0;y<vb.y+vb.h;y+=GRID){ const s=Math.round(y/GRID)%5===0;
-    el('line',{x1:vb.x,y1:y,x2:vb.x+vb.w,y2:y,stroke:s?'var(--grid-strong)':'var(--grid)','stroke-width':s?1.2:1},g); }
+function drawPaper(){
+  el('rect',{x:0,y:0,width:paperW(),height:paperH(),fill:'var(--paper)',stroke:'#B9C1CD','stroke-width':2*k()},svg);
 }
-/* 벽체 밴드: 방향으로 h만큼 연장 + 법선으로 ±두께/2 → 사각형 채움(두 모서리선 = 2선) */
-function drawWallBand(a,b,th,color){
-  const half=(th||DEF_TH_OUT)*PX_PER_MM/2, d=unit(a,b), n=perp(a,b);
-  const A={x:a.x-d.x*half,y:a.y-d.y*half}, B={x:b.x+d.x*half,y:b.y+d.y*half};
-  const p=[{x:A.x+n.x*half,y:A.y+n.y*half},{x:B.x+n.x*half,y:B.y+n.y*half},
-           {x:B.x-n.x*half,y:B.y-n.y*half},{x:A.x-n.x*half,y:A.y-n.y*half}];
-  const poly=el('polygon',{points:p.map(q=>`${q.x},${q.y}`).join(' '),fill:color,
-    stroke:'#0E141C','stroke-width':1,'stroke-linejoin':'miter'},svg);
-  poly.style.cursor='pointer';
+function drawGrid(){ const g=el('g',{},svg); const step=1000; // 1m 격자(실측)
+  const x0=Math.max(0,Math.floor(vb.x/step)*step), y0=Math.max(0,Math.floor(vb.y/step)*step);
+  for(let x=x0;x<Math.min(vb.x+vb.w,paperW());x+=step) el('line',{x1:x,y1:0,x2:x,y2:paperH(),stroke:'var(--grid)','stroke-width':k()},g);
+  for(let y=y0;y<Math.min(vb.y+vb.h,paperH());y+=step) el('line',{x1:0,y1:y,x2:paperW(),y2:y,stroke:'var(--grid)','stroke-width':k()},g);
 }
-function strokePath(st,color){ if(st.length<2){ if(st.length)el('circle',{cx:st[0].x,cy:st[0].y,r:4,fill:color},svg); return; }
-  el('polyline',{points:st.map(p=>`${p.x},${p.y}`).join(' '),fill:'none',stroke:color,'stroke-width':4,'stroke-linejoin':'round','stroke-linecap':'round',opacity:.9},svg); }
+function polyLine(pts,closed,color,wd){ const d=pts.map((p,i)=>(i?'L':'M')+p.x+' '+p.y).join(' ')+(closed?' Z':'');
+  el('path',{d,fill:'none',stroke:color,'stroke-width':wd,'stroke-linejoin':'miter','stroke-miterlimit':8},svg); }
+function drawInner(w,K){
+  if(w.pts.length<2)return;
+  const c=trimInner(w.pts);                       // 끝을 벽 안쪽 면까지 트림
+  const L=offsetOpen(c,DEF_TH/2), R=offsetOpen(c,-DEF_TH/2);
+  polyPath(L,'var(--inner)',1.5*K); polyPath(R,'var(--inner)',1.5*K);
+}
+/* 내부벽 양 끝을 벽두께/2 만큼 안으로 당김 = 외벽 중심선이 아닌 안쪽 면에서 끝남 */
+function trimInner(pts){ const t=DEF_TH/2, p=pts.map(v=>({x:v.x,y:v.y})), n=p.length;
+  if(n>=2){ const d0=unit(p[0],p[1]); p[0]={x:p[0].x+d0.x*t,y:p[0].y+d0.y*t};
+    const dl=unit(p[n-1],p[n-2]); p[n-1]={x:p[n-1].x+dl.x*t,y:p[n-1].y+dl.y*t}; }
+  return p; }
+/* 열린 폴리라인 오프셋 (코너 miter = 필렛 이음) */
+function offsetOpen(pts,off){ const n=pts.length,out=[];
+  for(let i=0;i<n;i++){ const n1=i>0?perp(pts[i-1],pts[i]):null, n2=i<n-1?perp(pts[i],pts[i+1]):null;
+    if(n1&&n2){ let x=n1.x+n2.x,y=n1.y+n2.y;const l=Math.hypot(x,y)||1;x/=l;y/=l;
+      const cos=Math.max(n1.x*x+n1.y*y,0.4); out.push({x:pts[i].x+x*off/cos,y:pts[i].y+y*off/cos}); }
+    else { const nn=n1||n2; out.push({x:pts[i].x+nn.x*off,y:pts[i].y+nn.y*off}); } }
+  return out; }
+function polyPath(pts,color,wd){ const d=pts.map((p,i)=>(i?'L':'M')+p.x+' '+p.y).join(' ');
+  el('path',{d,fill:'none',stroke:color,'stroke-width':wd,'stroke-linejoin':'miter','stroke-miterlimit':8},svg); }
+function strokePath(st,color,K){ if(st.length<2){ if(st.length)el('circle',{cx:st[0].x,cy:st[0].y,r:3*K,fill:color},svg); return; }
+  el('polyline',{points:st.map(p=>`${p.x},${p.y}`).join(' '),fill:'none',stroke:color,'stroke-width':3*K,'stroke-linejoin':'round','stroke-linecap':'round',opacity:.9},svg); }
 function normal(a,b,c){ const n=perp(a,b),m={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
-  if((m.x-c.x)*n.x+(m.y-c.y)*n.y<0)return {x:-n.x,y:-n.y}; return n; }
+  if((m.x-c.x)*n.x+(m.y-c.y)*n.y<0)return {x:-n.x,y:-n.y};return n; }
 
-/* 캐드식 치수: 양끝 보조선 + 치수선 + 중앙 박스(탭/롱프레스) */
-function drawDim(a,b,mm,c,ref,off){
-  const n=normal(a,b,c), measured=mm>0, shown=measured?mm:Math.round(dist(a,b)/PX_PER_MM);
-  const half=thOf(ref)*PX_PER_MM/2;
-  const base=off+half;
-  const a1={x:a.x+n.x*half,y:a.y+n.y*half}, b1={x:b.x+n.x*half,y:b.y+n.y*half};       // 벽면
-  const a2={x:a.x+n.x*(base+6),y:a.y+n.y*(base+6)}, b2={x:b.x+n.x*(base+6),y:b.y+n.y*(base+6)}; // 보조선 끝
-  const ad={x:a.x+n.x*base,y:a.y+n.y*base}, bd={x:b.x+n.x*base,y:b.y+n.y*base};       // 치수선
+/* 균일두께 오프셋 폴리곤 (off>0 바깥) */
+function offsetPoly(pts,off){ const n=pts.length,c=centroid(pts),out=[];
+  for(let i=0;i<n;i++){ const prev=pts[(i-1+n)%n],cur=pts[i],next=pts[(i+1)%n];
+    const n1=normal(prev,cur,c),n2=normal(cur,next,c);
+    let mx=n1.x+n2.x,my=n1.y+n2.y;const ml=Math.hypot(mx,my)||1;mx/=ml;my/=ml;
+    const cosH=Math.max(n1.x*mx+n1.y*my,0.4);
+    out.push({x:cur.x+mx*(off/cosH),y:cur.y+my*(off/cosH)}); }
+  return out; }
+
+/* 내경치수: 중심선 − 벽두께 */
+function innerMM(a,b){ return Math.max(0,Math.round(dist(a,b)-DEF_TH)); }
+function drawDim(a,b,mm,c,ref,off,outer,K){
+  const n=normal(a,b,c), measured=mm>0, shown=measured?mm:(outer?innerMM(a,b):Math.round(dist(a,b)));
+  const base=off+DEF_TH/2;
+  const a1={x:a.x+n.x*(DEF_TH/2),y:a.y+n.y*(DEF_TH/2)}, b1={x:b.x+n.x*(DEF_TH/2),y:b.y+n.y*(DEF_TH/2)};
+  const ad={x:a.x+n.x*base,y:a.y+n.y*base}, bd={x:b.x+n.x*base,y:b.y+n.y*base};
+  const a2={x:a.x+n.x*(base+6*K),y:a.y+n.y*(base+6*K)}, b2={x:b.x+n.x*(base+6*K),y:b.y+n.y*(base+6*K)};
   const g=el('g',{},svg);
-  el('line',{x1:a1.x,y1:a1.y,x2:a2.x,y2:a2.y,stroke:'var(--dim-line)','stroke-width':1},g); // 보조선
-  el('line',{x1:b1.x,y1:b1.y,x2:b2.x,y2:b2.y,stroke:'var(--dim-line)','stroke-width':1},g);
-  el('line',{x1:ad.x,y1:ad.y,x2:bd.x,y2:bd.y,stroke:'var(--dim-line)','stroke-width':1},g); // 치수선
-  // 끝 화살촉
-  arrow(g,ad,bd); arrow(g,bd,ad);
-  // 중앙 박스
+  el('line',{x1:a1.x,y1:a1.y,x2:a2.x,y2:a2.y,stroke:'var(--dim-line)','stroke-width':K},g);
+  el('line',{x1:b1.x,y1:b1.y,x2:b2.x,y2:b2.y,stroke:'var(--dim-line)','stroke-width':K},g);
+  el('line',{x1:ad.x,y1:ad.y,x2:bd.x,y2:bd.y,stroke:'var(--dim-line)','stroke-width':K},g);
+  arrow(g,ad,bd,K); arrow(g,bd,ad,K);
   const mid={x:(ad.x+bd.x)/2,y:(ad.y+bd.y)/2};
-  const txt=measured?String(shown):shown+' ?', tw=txt.length*8.5+14;
-  const box=el('g',{},svg); box.dataset.ref=JSON.stringify(ref); box.style.cursor='pointer';
-  el('rect',{x:mid.x-tw/2,y:mid.y-12,width:tw,height:24,rx:6,fill:'#fff',
-    stroke:measured?'var(--measured)':'var(--unmeasured)','stroke-width':1.6},box);
-  const t=el('text',{x:mid.x,y:mid.y,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono',
-    'font-size':13,'font-weight':600,fill:measured?'var(--measured)':'var(--unmeasured)'},box); t.textContent=txt;
+  const active=S.activeBox&&sameRef(S.activeBox,ref);
+  const txt=measured?String(shown):shown+' ?', tw=(txt.length*8.5+16)*K, th=24*K;
+  const box=el('g',{},svg); box.dataset.box=JSON.stringify(ref); box.style.cursor='pointer';
+  const stroke=active?'var(--active)':(measured?'var(--measured)':'var(--unmeasured)');
+  el('rect',{x:mid.x-tw/2,y:mid.y-th/2,width:tw,height:th,rx:6*K,
+    fill:active?'var(--active)':'#fff',stroke,'stroke-width':1.6*K},box);
+  el('text',{x:mid.x,y:mid.y,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono',
+    'font-size':13*K,'font-weight':600,fill:active?'#fff':stroke},box).textContent=txt;
 }
-function arrow(g,from,to){ const d=unit(from,to),n=perp(from,to),s=5;
-  const tip=from; const b1={x:tip.x+d.x*s+n.x*2.2,y:tip.y+d.y*s+n.y*2.2}, b2={x:tip.x+d.x*s-n.x*2.2,y:tip.y+d.y*s-n.y*2.2};
-  el('polygon',{points:`${tip.x},${tip.y} ${b1.x},${b1.y} ${b2.x},${b2.y}`,fill:'var(--dim-line)'},g); }
-function selSeg(sel){ if(sel.t==='o'){ const n=S.outline.length; if(!n)return null; return {a:S.outline[sel.w],b:S.outline[(sel.w+1)%n]}; }
-  const w=S.interiors[sel.s]; if(!w)return null; return {a:w.pts[sel.w],b:w.pts[sel.w+1]}; }
-function thOf(sel){ return sel.t==='o'? (S.outlineTh[sel.w]||DEF_TH_OUT) : (S.interiors[sel.s].th[sel.w]||DEF_TH_IN); }
+function arrow(g,from,to,K){ const d=unit(from,to),n=perp(from,to),s=5*K,w=2.2*K;
+  el('polygon',{points:`${from.x},${from.y} ${from.x+d.x*s+n.x*w},${from.y+d.y*s+n.y*w} ${from.x+d.x*s-n.x*w},${from.y+d.y*s-n.y*w}`,fill:'var(--dim-line)'},g); }
+function hitWall(a,b,ref,K){ const h=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'transparent','stroke-width':DEF_TH+16*K},svg);
+  h.style.cursor='pointer'; h.dataset.wall=JSON.stringify(ref); }
+function selSeg(sel){ if(sel.t==='o'){ const n=S.outline.length;if(!n)return null;return {a:S.outline[sel.w],b:S.outline[(sel.w+1)%n]}; }
+  const w=S.interiors[sel.s];if(!w)return null;return {a:w.pts[sel.w],b:w.pts[sel.w+1]}; }
+function sameRef(x,y){ return x&&y&&x.t===y.t&&x.w===y.w&&x.s===y.s; }
 
-function updateScale(){ const ppm=PX_PER_MM/svPerPx();
-  const nice=[100,200,500,1000,2000,5000,10000,20000]; let m=1000;
-  for(const cand of nice){ const w=cand*ppm; if(w>=70&&w<=200){m=cand;break;} if(w>200){m=cand;break;} }
-  document.getElementById('scaleLine').style.width=Math.round(m*ppm)+'px';
-  document.getElementById('scaleLabel').textContent=m>=1000?(m/1000)+'m':m+'mm';
-}
+function updatePaperLbl(){ document.getElementById('paperLbl').textContent=paperSize+' · 1:'+scale; }
 
 /* =========================================================================
-   손보정: RDP → 짧은조각 제거 → 30° 스냅
+   손보정 : RDP → 짧은조각 제거 → 30°스냅 → 축정렬
    ========================================================================= */
 function rdp(pts,eps){ if(pts.length<3)return pts.slice();
   const a=pts[0],b=pts[pts.length-1];let dmax=0,idx=0;
   for(let i=1;i<pts.length-1;i++){ const d=distToSeg(pts[i],a,b).d; if(d>dmax){dmax=d;idx=i;} }
   if(dmax>eps){ const l=rdp(pts.slice(0,idx+1),eps),r=rdp(pts.slice(idx),eps);return l.slice(0,-1).concat(r); }
   return [a,b]; }
-function dejunk(pts,closed){ const MIN=300*PX_PER_MM; let out=pts.slice();
-  let guard=0; while(out.length>(closed?4:3) && guard++<50){ let done=true;
-    for(let i=0;i<out.length-1;i++){ if(dist(out[i],out[i+1])<MIN){ out.splice(i+1,1); done=false; break; } }
-    if(done)break; }
+function dejunk(pts,closed){ const MIN=Math.max(300,scale*8); let out=pts.slice(),guard=0;
+  while(out.length>(closed?4:3)&&guard++<60){ let done=true;
+    for(let i=0;i<out.length-1;i++){ if(dist(out[i],out[i+1])<MIN){ out.splice(i+1,1);done=false;break; } } if(done)break; }
   return out; }
-function snapChain(pts,closed){
-  const nv=[{x:pts[0].x,y:pts[0].y}];
-  for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1];
-    const len=dist(a,b); let deg=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
-    const k=Math.round(deg/90), snapDeg=k*90;
-    let ang=(Math.abs(deg-snapDeg)<=SNAP_DEG)? snapDeg : deg;
-    const r=ang*Math.PI/180;
-    nv.push({x:nv[i].x+Math.cos(r)*len, y:nv[i].y+Math.sin(r)*len});
-  }
-  return nv;
+function snapChain(pts){ const nv=[{x:pts[0].x,y:pts[0].y}];
+  for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1],len=dist(a,b);
+    let deg=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI; const kk=Math.round(deg/90),sd=kk*90;
+    const ang=(Math.abs(deg-sd)<=SNAP_DEG?sd:deg)*Math.PI/180;
+    nv.push({x:nv[i].x+Math.cos(ang)*len,y:nv[i].y+Math.sin(ang)*len}); } return nv; }
+function cluster(vals,thr){ const s=[...vals].sort((a,b)=>a-b),groups=[]; let cur=[s[0]];
+  for(let i=1;i<s.length;i++){ if(s[i]-cur[cur.length-1]<thr)cur.push(s[i]); else {groups.push(cur);cur=[s[i]];} }
+  groups.push(cur); return groups.map(g=>g.reduce((a,b)=>a+b,0)/g.length); }
+function alignAxis(pts){ const thr=Math.max(250,scale*6);
+  const gx=cluster(pts.map(p=>p.x),thr),gy=cluster(pts.map(p=>p.y),thr);
+  const near=(v,g)=>{ let b=g[0]; for(const x of g)if(Math.abs(x-v)<Math.abs(b-v))b=x; return b; };
+  return pts.map(p=>({x:near(p.x,gx),y:near(p.y,gy)})); }
+/* ★ 전체 벽 정점을 한꺼번에 공통 격자에 정렬 → 벽끼리 만남 */
+function alignAll(){
+  const V=[]; S.outline.forEach(v=>V.push(v)); S.interiors.forEach(w=>w.pts.forEach(v=>V.push(v)));
+  if(V.length<2)return; const thr=Math.max(300,scale*8);
+  const gx=cluster(V.map(p=>p.x),thr),gy=cluster(V.map(p=>p.y),thr);
+  const nb=(v,g)=>{ let b=g[0]; for(const x of g)if(Math.abs(x-v)<Math.abs(b-v))b=x; return b; };
+  S.outline=S.outline.map(v=>({x:nb(v.x,gx),y:nb(v.y,gy)}));
+  S.interiors.forEach(w=>{ w.pts=w.pts.map(v=>({x:nb(v.x,gx),y:nb(v.y,gy)})); });
 }
-function snapToWalls(p,ignore){ let best=null; const R=60;
-  const consider=(a,b)=>{ const r=distToSeg(p,a,b); if(r.d<R&&(!best||r.d<best.d))best={d:r.d,proj:r.proj}; };
-  for(let i=0;i<S.outline.length;i++) consider(S.outline[i],S.outline[(i+1)%S.outline.length]);
-  S.interiors.forEach((w,si)=>{ if(si===ignore)return; for(let j=0;j<w.pts.length-1;j++)consider(w.pts[j],w.pts[j+1]); });
+/* ★ 내부벽 끝점을 가장 가까운 벽(선 투영 또는 정점)에 연결 */
+function snapEnd(p,ignore){
+  const proj=snapToWalls(p,ignore); let best={d:dist(p,proj),pt:proj};
+  const RV=Math.max(500,scale*12);
+  const tryV=v=>{ const dd=dist(p,v); if(dd<RV&&dd<best.d)best={d:dd,pt:{x:v.x,y:v.y}}; };
+  S.outline.forEach(tryV); S.interiors.forEach((w,si)=>{ if(si===ignore)return; w.pts.forEach(tryV); });
+  return best.pt;
+}
+function snapInteriorEnds(){ S.interiors.forEach((w,si)=>{ if(w.pts.length<2)return;
+  w.pts[0]=snapEnd(w.pts[0],si); w.pts[w.pts.length-1]=snapEnd(w.pts[w.pts.length-1],si); }); }
+/* ★ 외곽 삐침(overshoot)·중복정점·일직선 정리 */
+function colin(a,b,c){ if(Math.abs(a.y-b.y)<1&&Math.abs(b.y-c.y)<1)return true;
+  if(Math.abs(a.x-b.x)<1&&Math.abs(b.x-c.x)<1)return true; return false; }
+function cleanupOutline(){ if(S.outline.length<4)return;
+  const MERGE=Math.max(200,scale*5); let out=[];
+  for(const v of S.outline){ if(!out.length||dist(out[out.length-1],v)>MERGE)out.push(v); }
+  if(out.length>1 && dist(out[0],out[out.length-1])<MERGE)out.pop();
+  const res=[],n=out.length;
+  for(let i=0;i<n;i++){ const a=out[(i-1+n)%n],b=out[i],c=out[(i+1)%n]; if(colin(a,b,c))continue; res.push(b); }
+  S.outline = res.length>=3? res : out;
+}
+function snapToWalls(p,ignore){ let best=null;const R=Math.max(500,scale*12);
+  const cons=(a,b)=>{ const r=distToSeg(p,a,b); if(r.d<R&&(!best||r.d<best.d))best={d:r.d,proj:r.proj}; };
+  for(let i=0;i<S.outline.length;i++) cons(S.outline[i],S.outline[(i+1)%S.outline.length]);
+  S.interiors.forEach((w,si)=>{ if(si===ignore)return; for(let j=0;j<w.pts.length-1;j++)cons(w.pts[j],w.pts[j+1]); });
   return best?best.proj:p; }
 
 function convert(){
@@ -317,210 +355,194 @@ function convert(){
   pushHist();
   let outlineDone=!!S.outline.length; const newIn=[];
   strokes.forEach(st=>{
-    let sp=rdp(st,16);
-    const closed=sp.length>=4 && dist(sp[0],sp[sp.length-1])<50 && chainLen(sp)>140;
+    let sp=rdp(st,Math.max(150,scale*4));
+    const closed=sp.length>=4 && dist(sp[0],sp[sp.length-1])<Math.max(600,scale*14) && chainLen(sp)>Math.max(1500,scale*30);
     if(closed) sp=sp.slice(0,-1);
     sp=dejunk(sp,closed);
-    if(S.ortho) sp=snapChain(sp,closed);
-    if(closed && !outlineDone){
-      S.outline=sp; S.outlineMM=new Array(sp.length).fill(0); S.outlineTh=new Array(sp.length).fill(DEF_TH_OUT); outlineDone=true;
-    } else {
-      sp[0]=snapToWalls(sp[0]); sp[sp.length-1]=snapToWalls(sp[sp.length-1]);
-      newIn.push({pts:sp, mm:new Array(sp.length-1).fill(0), th:new Array(sp.length-1).fill(DEF_TH_IN)});
-    }
+    if(S.ortho) sp=snapChain(sp);          // 1) 각 벽 각도만 직각 스냅
+    if(closed && !outlineDone){ S.outline=sp; outlineDone=true; }
+    else newIn.push({pts:sp});
   });
-  S.interiors=S.interiors.concat(newIn);
-  S.strokes=[]; S.cur=null; S.sel=null;
-  setMode('edit'); fit(); flash('치수박스 탭 = 선택 · 길게 누름 = 숫자입력');
+  S.interiors=S.interiors.concat(newIn.map(o=>({pts:o.pts,mm:[],th:[]})));
+  if(S.ortho) alignAll();                    // 2) 전체 벽 공통 격자 정렬(벽끼리 맞춤)
+  cleanupOutline();                          // 3) 외곽 삐침/일직선 정리
+  snapInteriorEnds();                        // 4) 내부벽 끝 → 벽에 연결
+  // 치수/두께 배열 정합
+  S.outlineMM=new Array(S.outline.length).fill(0); S.outlineTh=new Array(S.outline.length).fill(DEF_TH);
+  S.interiors.forEach(w=>{ const seg=Math.max(0,w.pts.length-1);
+    w.mm=new Array(seg).fill(0); w.th=new Array(seg).fill(DEF_TH); });
+  S.strokes=[];S.cur=null;S.activeBox=null;S.selWall=null;
+  setMode('edit'); fitContent(); flash('정리됨 · 안 맞는 코너는 끌어서 맞추면 돼요');
 }
 function chainLen(pts){ let s=0;for(let i=0;i<pts.length-1;i++)s+=dist(pts[i],pts[i+1]);return s; }
 
 /* =========================================================================
-   포인터: 스케치 / 핀치 / 팬 / 정점드래그 / 탭+롱프레스
+   포인터
    ========================================================================= */
 const pointers=new Map();
-let startPan=null,moved=false,lastPinch=null,dragV=null,pending=null,lpTimer=null,lpFired=false;
-
+let startPan=null,moved=false,lastPinch=null,dragV=null,pend=null,lpTimer=null,lpFired=false;
 svg.addEventListener('pointerdown',e=>{
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===2){ lastPinch=null;startPan=null;S.cur=null;dragV=null;cancelLP(); return; }
-  if(pointers.size!==1) return;
-  moved=false;
+  if(pointers.size===2){ lastPinch=null;startPan=null;S.cur=null;dragV=null;cancelLP();pend=null;return; }
+  if(pointers.size!==1)return; moved=false;
   if(S.mode==='sketch'){ S.cur=[toSvg(e.clientX,e.clientY)]; return; }
-  const v=vertexAt(e.clientX,e.clientY);
-  if(v){ dragV=v; pushHist(); return; }
-  const ref=refAt(e.clientX,e.clientY);
-  if(ref){ pending={ref,cx:e.clientX,cy:e.clientY}; lpFired=false;
-    lpTimer=setTimeout(()=>{ lpFired=true; selectWall(ref); openNumpad(); },500); }
-  else startPan={sx:e.clientX,sy:e.clientY,vbx:vb.x,vby:vb.y};
+  const v=vertexAt(e.clientX,e.clientY); if(v){ dragV=v; pushHist(); return; }
+  const hb=hitBox(e.clientX,e.clientY);
+  if(hb){ pend={kind:'box',ref:hb,cx:e.clientX,cy:e.clientY}; lpFired=false;
+    lpTimer=setTimeout(()=>{ lpFired=true; openNumpad(hb); },500); return; }
+  const hw=hitWallRef(e.clientX,e.clientY);
+  if(hw){ pend={kind:'wall',ref:hw,cx:e.clientX,cy:e.clientY}; return; }
+  startPan={sx:e.clientX,sy:e.clientY,vbx:vb.x,vby:vb.y};
 });
 svg.addEventListener('pointermove',e=>{
-  if(!pointers.has(e.pointerId))return;
-  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(!pointers.has(e.pointerId))return; pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pointers.size>=2){ pinch(); return; }
-  if(S.mode==='sketch'){ if(S.cur){ const p=toSvg(e.clientX,e.clientY);
-    if(dist(p,S.cur[S.cur.length-1])>4){ S.cur.push(p); render(); } } return; }
-  if(pending){ if(Math.abs(e.clientX-pending.cx)+Math.abs(e.clientY-pending.cy)>8){ cancelLP();
-    startPan={sx:pending.cx,sy:pending.cy,vbx:vb.x,vby:vb.y}; pending=null; } }
+  if(S.mode==='sketch'){ if(S.cur){ const p=toSvg(e.clientX,e.clientY); if(dist(p,S.cur[S.cur.length-1])>4*k()){ S.cur.push(p);render(); } } return; }
+  if(pend){ if(Math.abs(e.clientX-pend.cx)+Math.abs(e.clientY-pend.cy)>8){ cancelLP(); startPan={sx:pend.cx,sy:pend.cy,vbx:vb.x,vby:vb.y}; pend=null; } }
   if(dragV){ moveVertex(dragV,toSvg(e.clientX,e.clientY)); render(); return; }
   if(startPan){ const dx=e.clientX-startPan.sx,dy=e.clientY-startPan.sy;
-    if(Math.abs(dx)+Math.abs(dy)>7){ moved=true; const sc=svPerPx();
-      vb.x=startPan.vbx-dx*sc; vb.y=startPan.vby-dy*sc; apply(); render(); } }
+    if(Math.abs(dx)+Math.abs(dy)>7){ moved=true; const sc=k(); vb.x=startPan.vbx-dx*sc; vb.y=startPan.vby-dy*sc; apply();render(); } }
 });
 svg.addEventListener('pointerup',e=>{
-  const single=pointers.size===1; const cx=e.clientX,cy=e.clientY;
-  pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null;
-  if(!single)return;
-  if(S.mode==='sketch'){ if(S.cur&&S.cur.length>=2)S.strokes.push(S.cur); S.cur=null;
+  const single=pointers.size===1; pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; if(!single)return;
+  if(S.mode==='sketch'){ if(S.cur&&S.cur.length>=2){ pushHist(); S.strokes.push(S.cur); } S.cur=null;
     document.getElementById('btnConvert').disabled=!S.strokes.length; render(); return; }
   if(dragV){ finalizeDrag(dragV); dragV=null; render(); return; }
-  if(pending){ cancelLP(); if(!lpFired){ selectWall(pending.ref); openSel(); } pending=null; startPan=null; return; }
+  if(pend){ cancelLP();
+    if(!lpFired){ if(pend.kind==='box') toggleActiveBox(pend.ref); else selectWallTh(pend.ref); }
+    pend=null; startPan=null; return; }
   startPan=null;
 });
-svg.addEventListener('pointercancel',e=>{ pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; S.cur=null; dragV=null; cancelLP(); pending=null; });
-function cancelLP(){ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }
-
-function pinch(){ const ps=[...pointers.values()];
-  const d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y),mid={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
-  if(lastPinch){ const f=lastPinch.d/d,p=toSvg(mid.x,mid.y);
-    vb.w*=f;vb.h*=f;vb.x=p.x-(p.x-vb.x)*f;vb.y=p.y-(p.y-vb.y)*f;
-    const sc=svPerPx();vb.x-=(mid.x-lastPinch.mid.x)*sc;vb.y-=(mid.y-lastPinch.mid.y)*sc;apply();render(); }
-  lastPinch={d,mid};
-}
-function refAt(cx,cy){ const h=document.elementFromPoint(cx,cy);
-  let e=h; while(e && e!==svg){ if(e.dataset&&e.dataset.ref)return JSON.parse(e.dataset.ref); e=e.parentNode; } return null; }
-function vertexAt(cx,cy){ const p=toSvg(cx,cy),R=22*svPerPx();
+svg.addEventListener('pointercancel',e=>{ pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; S.cur=null;dragV=null;cancelLP();pend=null; });
+function cancelLP(){ if(lpTimer){clearTimeout(lpTimer);lpTimer=null;} }
+function pinch(){ const ps=[...pointers.values()],d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y),mid={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
+  if(lastPinch){ const f=lastPinch.d/d,p=toSvg(mid.x,mid.y); vb.w*=f;vb.h*=f;vb.x=p.x-(p.x-vb.x)*f;vb.y=p.y-(p.y-vb.y)*f;
+    const sc=k();vb.x-=(mid.x-lastPinch.mid.x)*sc;vb.y-=(mid.y-lastPinch.mid.y)*sc;apply();render(); } lastPinch={d,mid}; }
+function elAt(cx,cy,attr){ let e=document.elementFromPoint(cx,cy); while(e&&e!==svg){ if(e.dataset&&e.dataset[attr])return JSON.parse(e.dataset[attr]); e=e.parentNode; } return null; }
+function hitBox(cx,cy){ return elAt(cx,cy,'box'); }
+function hitWallRef(cx,cy){ return elAt(cx,cy,'wall'); }
+function vertexAt(cx,cy){ const p=toSvg(cx,cy),R=22*k();
   for(let i=0;i<S.outline.length;i++) if(dist(p,S.outline[i])<R)return {t:'o',i};
-  for(let s=0;s<S.interiors.length;s++){ const w=S.interiors[s];
-    for(let i=0;i<w.pts.length;i++) if(dist(p,w.pts[i])<R)return {t:'in',s,i}; } return null; }
+  for(let s=0;s<S.interiors.length;s++){ const w=S.interiors[s]; for(let i=0;i<w.pts.length;i++) if(dist(p,w.pts[i])<R)return {t:'in',s,i}; } return null; }
 function axisH(a,b){ return Math.abs(b.x-a.x)>=Math.abs(b.y-a.y); }
 function moveVertex(v,np){
-  if(v.t==='o'){ const arr=S.outline,n=arr.length,prev=(v.i-1+n)%n,next=(v.i+1)%n;
-    if(S.ortho){ const ph=axisH(arr[prev],arr[v.i]),nh=axisH(arr[v.i],arr[next]); arr[v.i]={x:np.x,y:np.y};
-      arr[prev]= ph?{x:arr[prev].x,y:np.y}:{x:np.x,y:arr[prev].y};
-      arr[next]= nh?{x:arr[next].x,y:np.y}:{x:np.x,y:arr[next].y};
-    } else arr[v.i]={x:np.x,y:np.y};
+  if(v.t==='o'){ const arr=S.outline,n=arr.length,pr=(v.i-1+n)%n,nx=(v.i+1)%n;
+    if(S.ortho){ const ph=axisH(arr[pr],arr[v.i]),nh=axisH(arr[v.i],arr[nx]); arr[v.i]={x:np.x,y:np.y};
+      arr[pr]=ph?{x:arr[pr].x,y:np.y}:{x:np.x,y:arr[pr].y}; arr[nx]=nh?{x:arr[nx].x,y:np.y}:{x:np.x,y:arr[nx].y}; }
+    else arr[v.i]={x:np.x,y:np.y};
   } else { const w=S.interiors[v.s],pts=w.pts,n=pts.length;
     if(S.ortho){ pts[v.i]={x:np.x,y:np.y};
-      if(v.i>0){ const ph=axisH(pts[v.i-1],pts[v.i]); pts[v.i-1]= ph?{x:pts[v.i-1].x,y:np.y}:{x:np.x,y:pts[v.i-1].y}; }
-      if(v.i<n-1){ const nh=axisH(pts[v.i],pts[v.i+1]); pts[v.i+1]= nh?{x:pts[v.i+1].x,y:np.y}:{x:np.x,y:pts[v.i+1].y}; }
-    } else pts[v.i]={x:np.x,y:np.y}; }
-}
+      if(v.i>0){ const ph=axisH(pts[v.i-1],pts[v.i]); pts[v.i-1]=ph?{x:pts[v.i-1].x,y:np.y}:{x:np.x,y:pts[v.i-1].y}; }
+      if(v.i<n-1){ const nh=axisH(pts[v.i],pts[v.i+1]); pts[v.i+1]=nh?{x:pts[v.i+1].x,y:np.y}:{x:np.x,y:pts[v.i+1].y}; } }
+    else pts[v.i]={x:np.x,y:np.y}; } }
 function finalizeDrag(v){ if(v.t==='in'){ const w=S.interiors[v.s];
-    if(v.i===0)w.pts[0]=snapToWalls(w.pts[0],v.s);
-    if(v.i===w.pts.length-1)w.pts[v.i]=snapToWalls(w.pts[v.i],v.s); } recalcMM(); }
-function recalcMM(){ for(let i=0;i<S.outline.length;i++) if(S.outlineMM[i]>0)
-    S.outlineMM[i]=Math.round(dist(S.outline[i],S.outline[(i+1)%S.outline.length])/PX_PER_MM);
-  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) if(w.mm[j]>0) w.mm[j]=Math.round(dist(w.pts[j],w.pts[j+1])/PX_PER_MM); }); }
+    if(v.i===0)w.pts[0]=snapToWalls(w.pts[0],v.s); if(v.i===w.pts.length-1)w.pts[v.i]=snapToWalls(w.pts[v.i],v.s); } }
 
 /* =========================================================================
-   선택 바 + 벽두께
+   치수박스(실측) / 벽체(두께)
    ========================================================================= */
-const selbar=document.getElementById('selbar'),sbName=document.getElementById('sbName'),
-      sbDimVal=document.getElementById('sbDimVal'),thVal=document.getElementById('thVal');
-function curMM(sel){ return sel.t==='o'?S.outlineMM[sel.w]:S.interiors[sel.s].mm[sel.w]; }
-function setMM(sel,mm){ if(sel.t==='o')S.outlineMM[sel.w]=mm; else S.interiors[sel.s].mm[sel.w]=mm; }
-function setTh(sel,v){ if(sel.t==='o')S.outlineTh[sel.w]=v; else S.interiors[sel.s].th[sel.w]=v; }
-function selectWall(ref){ S.sel=ref; render();
-  sbName.textContent=ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽';
-  sbDimVal.textContent=curMM(ref)||'—'; thVal.textContent=thOf(ref); }
-function openSel(){ selbar.classList.add('open'); syncZoombar(); }
-function closeSel(){ selbar.classList.remove('open'); syncZoombar(); }
-function syncZoombar(){ document.documentElement.style.setProperty('--dimh', selbar.classList.contains('open')?(selbar.offsetHeight+'px'):'0px'); }
-function rebuildChain(sel){
-  if(sel.t==='o'){ const n=S.outline.length; if(n<3)return; const dirs=[],lens=[];
-    for(let i=0;i<n;i++){ dirs.push(unit(S.outline[i],S.outline[(i+1)%n])); lens.push(S.outlineMM[i]?S.outlineMM[i]*PX_PER_MM:dist(S.outline[i],S.outline[(i+1)%n])); }
+function toggleActiveBox(ref){ if(sameRef(S.activeBox,ref)) S.activeBox=null; else { S.activeBox=ref;
+    if(!laser.connected) flash('초록=실측 대기 · 레이저 연결하거나 길게 눌러 직접 입력'); else flash('측정기 버튼을 누르세요'); } render(); }
+function getMM(ref){ return ref.t==='o'?S.outlineMM[ref.w]:S.interiors[ref.s].mm[ref.w]; }
+function setMMv(ref,mm){ if(ref.t==='o')S.outlineMM[ref.w]=mm; else S.interiors[ref.s].mm[ref.w]=mm; }
+function applyMeasure(ref,mm){ pushHist(); setMMv(ref,mm); rebuildChain(ref); S.activeBox=null; render(); }
+/* 내경 입력 → 중심선 길이 = 내경 + 벽두께 (외곽), 내부벽은 그대로 */
+function rebuildChain(ref){
+  if(ref.t==='o'){ const n=S.outline.length;if(n<3)return; const dirs=[],lens=[];
+    for(let i=0;i<n;i++){ dirs.push(unit(S.outline[i],S.outline[(i+1)%n]));
+      lens.push(S.outlineMM[i]? S.outlineMM[i]+DEF_TH : dist(S.outline[i],S.outline[(i+1)%n])); }
     const nv=[{...S.outline[0]}]; for(let i=0;i<n-1;i++)nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]}); S.outline=nv;
-  } else { const w=S.interiors[sel.s],n=w.pts.length; const dirs=[],lens=[];
-    for(let i=0;i<n-1;i++){ dirs.push(unit(w.pts[i],w.pts[i+1])); lens.push(w.mm[i]?w.mm[i]*PX_PER_MM:dist(w.pts[i],w.pts[i+1])); }
-    const nv=[{...w.pts[0]}]; for(let i=0;i<n-1;i++)nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]}); w.pts=nv; }
-}
-document.getElementById('sbClose').onclick=()=>{ S.sel=null; closeSel(); closeNumpad(); render(); };
-document.getElementById('sbDim').onclick=()=>openNumpad();
-document.getElementById('sbLaser').onclick=()=>{ if(!laser.connected){ document.getElementById('laserPop').classList.add('open'); flash('먼저 레이저를 연결하세요'); return; } flash('측정기 버튼을 누르면 이 벽에 들어갑니다'); };
-document.getElementById('thMinus').onclick=()=>stepTh(-10);
-document.getElementById('thPlus').onclick=()=>stepTh(10);
-function stepTh(d){ if(!S.sel)return; let v=thOf(S.sel)+d; v=Math.max(60,Math.min(400,v));
-  pushHist(); setTh(S.sel,v); thVal.textContent=v; render(); }
+  } else { const w=S.interiors[ref.s],n=w.pts.length; const dirs=[],lens=[];
+    for(let i=0;i<n-1;i++){ dirs.push(unit(w.pts[i],w.pts[i+1])); lens.push(w.mm[i]?w.mm[i]:dist(w.pts[i],w.pts[i+1])); }
+    const nv=[{...w.pts[0]}]; for(let i=0;i<n-1;i++)nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]}); w.pts=nv; } }
+
+const thbar=document.getElementById('thbar'),tbName=document.getElementById('tbName'),thVal=document.getElementById('thVal');
+function selectWallTh(ref){ S.selWall=ref; S.activeBox=null; render();
+  tbName.textContent=ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽'; thVal.textContent=DEF_TH; thbar.classList.add('open'); syncZoombar(); }
+function closeTh(){ thbar.classList.remove('open'); syncZoombar(); }
+function syncZoombar(){ document.documentElement.style.setProperty('--dimh',
+  (thbar.classList.contains('open'))?(thbar.offsetHeight+'px'):'0px'); }
+document.getElementById('tbClose').onclick=()=>{ S.selWall=null; closeTh(); render(); };
+document.getElementById('thMinus').onclick=()=>flash('※ 벽두께 개별조정은 다음 단계에서 (현재 전 벽 '+DEF_TH+')');
+document.getElementById('thPlus').onclick=()=>flash('※ 벽두께 개별조정은 다음 단계에서 (현재 전 벽 '+DEF_TH+')');
+
+/* 숫자패드 */
+const numpad=document.getElementById('numpad'),npVal=document.getElementById('npVal'),npHead=document.getElementById('npHead'),npGrid=document.getElementById('npGrid');
+let npBuf='',npRef=null;
+['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(kk=>{ const b=document.createElement('button');
+  b.textContent=kk; if(kk==='⌫')b.className='del'; if(kk==='✓')b.className='ok'; b.onclick=()=>npKey(kk); npGrid.appendChild(b); });
+function openNumpad(ref){ npRef=ref; S.activeBox=ref; render(); npBuf=String(getMM(ref)||'');
+  npHead.textContent=(ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽')+' 내경(mm)'; npVal.textContent=npBuf||'0'; numpad.classList.add('open'); }
+function closeNumpad(){ numpad.classList.remove('open'); npRef=null; }
+function npKey(kk){ if(kk==='⌫')npBuf=npBuf.slice(0,-1); else if(kk==='✓'){ applyNum(); return; } else if(npBuf.length<6)npBuf+=kk; npVal.textContent=npBuf||'0'; }
+function applyNum(){ if(!npRef)return; const mm=parseInt(npBuf)||0; applyMeasure(npRef,mm); closeNumpad(); flash('내경 '+mm+'mm 적용'); }
 
 /* =========================================================================
-   숫자패드
-   ========================================================================= */
-const numpad=document.getElementById('numpad'),npVal=document.getElementById('npVal'),
-      npHead=document.getElementById('npHead'),npGrid=document.getElementById('npGrid');
-let npBuf='';
-['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(k=>{ const b=document.createElement('button');
-  b.textContent=k; if(k==='⌫')b.className='del'; if(k==='✓')b.className='ok';
-  b.onclick=()=>npKey(k); npGrid.appendChild(b); });
-function openNumpad(){ if(!S.sel)return; openSel(); npBuf=String(curMM(S.sel)||'');
-  npHead.textContent=(S.sel.t==='o'?'외벽 #'+(S.sel.w+1):'내부벽')+' 치수';
-  npVal.textContent=npBuf||'0'; numpad.classList.add('open'); }
-function closeNumpad(){ numpad.classList.remove('open'); }
-function npKey(k){ if(k==='⌫')npBuf=npBuf.slice(0,-1);
-  else if(k==='✓'){ applyNum(); return; }
-  else { if(npBuf.length<6)npBuf+=k; }
-  npVal.textContent=npBuf||'0'; }
-function applyNum(){ if(!S.sel)return; const mm=parseInt(npBuf)||0;
-  pushHist(); setMM(S.sel,mm); rebuildChain(S.sel); sbDimVal.textContent=mm||'—'; closeNumpad(); render(); flash('치수 적용됨'); }
-
-/* =========================================================================
-   줌 / 맞춤 / 툴바 / 힌트
+   줌 / 맞춤 / 툴바
    ========================================================================= */
 function zoomAt(cx,cy,f){ const p=toSvg(cx,cy);vb.w*=f;vb.h*=f;vb.x=p.x-(p.x-vb.x)*f;vb.y=p.y-(p.y-vb.y)*f;apply();render(); }
 svg.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY,e.deltaY>0?1.12:0.9); },{passive:false});
 document.getElementById('zIn').onclick=()=>zoomAt(svg.clientWidth/2,svg.clientHeight/2,0.82);
 document.getElementById('zOut').onclick=()=>zoomAt(svg.clientWidth/2,svg.clientHeight/2,1.22);
-document.getElementById('zFit').onclick=fit;
-function allPts(){ let a=[...S.outline]; S.interiors.forEach(w=>a=a.concat(w.pts)); S.strokes.forEach(s=>a=a.concat(s)); if(S.cur)a=a.concat(S.cur); return a; }
-function fit(){ const pts=allPts(); if(!pts.length){ vb={x:0,y:0,w:1600,h:1000};apply();render();return; }
+document.getElementById('zFit').onclick=fitPaper;
+function fitPaper(){ const W=paperW(),H=paperH(),pad=Math.max(W,H)*0.06;
+  const w=W+pad*2,h=H+pad*2,ar=svg.clientWidth/svg.clientHeight; let VW=w,VH=h;
+  if(w/h>ar)VH=w/ar; else VW=h*ar; vb={x:-pad-(VW-w)/2,y:-pad-(VH-h)/2,w:VW,h:VH}; apply();render(); }
+function contentPts(){ let a=[...S.outline]; S.interiors.forEach(w=>a=a.concat(w.pts)); S.strokes.forEach(s=>a=a.concat(s)); if(S.cur)a=a.concat(S.cur); return a; }
+function fitContent(){ const pts=contentPts(); if(pts.length<2){ fitPaper(); return; }
   let a=1e9,b=1e9,c=-1e9,d=-1e9; pts.forEach(p=>{a=Math.min(a,p.x);b=Math.min(b,p.y);c=Math.max(c,p.x);d=Math.max(d,p.y);});
-  const pad=180;a-=pad;b-=pad;c+=pad;d+=pad; const w=c-a,h=d-b,ar=svg.clientWidth/svg.clientHeight;let W=w,H=h;
-  if(w/h>ar)H=w/ar;else W=h*ar; vb={x:a-(W-w)/2,y:b-(H-h)/2,w:W,h:H};apply();render(); }
+  const pad=Math.max(c-a,d-b)*0.18+DEF_TH*2; a-=pad;b-=pad;c+=pad;d+=pad;
+  const w=c-a,h=d-b,ar=svg.clientWidth/svg.clientHeight;let W=w,H=h; if(w/h>ar)H=w/ar;else W=h*ar;
+  vb={x:a-(W-w)/2,y:b-(H-h)/2,w:W,h:H}; apply();render(); }
 
 function setMode(m){ S.mode=m;
   document.getElementById('btnSketch').classList.toggle('primary',m==='sketch');
   document.getElementById('btnConvert').disabled=!(m==='sketch'&&(S.strokes.length||S.cur));
-  if(m==='sketch'){ S.sel=null; closeSel(); closeNumpad(); } render(); }
-document.getElementById('btnSketch').onclick=()=>{ setMode('sketch'); flash('벽 모양을 손으로 슥 그리세요'); };
+  if(m==='sketch'){ S.activeBox=null;S.selWall=null;closeTh();closeNumpad(); } render(); }
+document.getElementById('btnSketch').onclick=()=>{ setMode('sketch'); flash('벽 모양을 손으로 슥 · 외곽은 닫고 칸막이는 열어서'); };
 document.getElementById('btnConvert').onclick=convert;
-document.getElementById('btnOrtho').onclick=()=>{ S.ortho=!S.ortho;
-  const b=document.getElementById('btnOrtho'); b.classList.toggle('on',S.ortho);
-  b.textContent=S.ortho?'⊾ 직각보정 30°':'⊾ 보정 OFF'; flash(S.ortho?'30° 이내는 직각으로 보정':'보정 꺼짐(손그림 그대로)'); };
+document.getElementById('btnOrtho').onclick=()=>{ S.ortho=!S.ortho; const b=document.getElementById('btnOrtho');
+  b.classList.toggle('on',S.ortho); b.textContent=S.ortho?'⊾ 30°':'⊾ OFF'; flash(S.ortho?'30° 이내 직각보정 켜짐':'보정 꺼짐'); };
 document.getElementById('btnUndo').onclick=undo;
 document.getElementById('btnClear').onclick=()=>{ if(!confirm('전체 지울까요?'))return;
-  pushHist(); S.outline=[];S.outlineMM=[];S.outlineTh=[];S.interiors=[];S.strokes=[];S.cur=null;S.sel=null;
-  closeSel();closeNumpad(); vb={x:0,y:0,w:1600,h:1000}; setMode('sketch'); };
+  pushHist(); S.outline=[];S.outlineMM=[];S.outlineTh=[];S.interiors=[];S.strokes=[];S.cur=null;S.activeBox=null;S.selWall=null;
+  closeTh();closeNumpad(); setMode('sketch'); fitPaper(); };
 document.getElementById('btnExport').onclick=exportDXF;
+
+const selSize=document.getElementById('selSize'),selScale=document.getElementById('selScale');
+SCALES.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent='1:'+s; if(s===60)o.selected=true; selScale.appendChild(o); });
+selSize.onchange=()=>{ paperSize=selSize.value; fitPaper(); flash('용지 '+paperSize); };
+selScale.onchange=()=>{ scale=+selScale.value; fitPaper(); flash('스케일 1:'+scale); };
 
 const hintEl=document.getElementById('hint'); let flashT=null;
 function updateHint(){ let m;
-  if(S.mode==='sketch') m=(S.strokes.length||S.cur)?'더 그리거나 <b>→ 도면 변환</b> (외곽·내부벽 함께)':'벽 모양을 손으로 <b>슥</b> · 외곽은 닫고 칸막이는 열어서';
-  else if(S.sel) m='치수박스 <b>탭</b>=선택 · <b>길게</b>=숫자입력 · 코너 끌기=수정';
-  else m='치수박스 탭=치수 · 코너 끌기=수정 · 두 손가락=확대';
+  if(S.mode==='sketch') m=(S.strokes.length||S.cur)?'더 그리거나 <b>→ 변환</b> · 잘못 그렸으면 <b>↶</b>':'용지 위에 벽 모양을 손으로 <b>슥</b>';
+  else m='치수박스 탭=실측(초록) · 길게=입력 · 벽 탭=두께 · 코너 끌기=수정';
   hintEl.innerHTML=m; }
-function flash(t){ hintEl.innerHTML=t; clearTimeout(flashT); flashT=setTimeout(updateHint,1900); }
+function flash(t){ hintEl.innerHTML=t; clearTimeout(flashT); flashT=setTimeout(updateHint,2000); }
 
 /* =========================================================================
-   DXF (외곽/내부/치수 레이어)
+   DXF (내경 반영: 벽 중심선 + 안쪽선)
    ========================================================================= */
-function exportDXF(){
-  if(S.outline.length<3){ flash('먼저 평면도를 만들어주세요'); return; }
-  const all=allPts(),minx=Math.min(...all.map(p=>p.x)),maxy=Math.max(...all.map(p=>p.y));
-  const X=v=>Math.round((v.x-minx)/PX_PER_MM),Y=v=>Math.round((maxy-v.y)/PX_PER_MM);
+function exportDXF(){ if(S.outline.length<3){ flash('먼저 평면도를 만들어주세요'); return; }
+  const all=contentPts(),minx=Math.min(...all.map(p=>p.x)),maxy=Math.max(...all.map(p=>p.y));
+  const X=v=>Math.round(v.x-minx),Y=v=>Math.round(maxy-v.y);
   let d='0\nSECTION\n2\nENTITIES\n';
-  d+='0\nLWPOLYLINE\n8\nWALL\n90\n'+S.outline.length+'\n70\n1\n'; S.outline.forEach(v=>{ d+='10\n'+X(v)+'\n20\n'+Y(v)+'\n'; });
-  S.interiors.forEach(w=>{ d+='0\nLWPOLYLINE\n8\nINNER\n90\n'+w.pts.length+'\n70\n0\n'; w.pts.forEach(v=>{ d+='10\n'+X(v)+'\n20\n'+Y(v)+'\n'; }); });
-  const addDim=(a,b,mm)=>{ const len=mm||Math.round(dist(a,b)/PX_PER_MM);
+  const out=offsetPoly(S.outline,DEF_TH/2), inn=offsetPoly(S.outline,-DEF_TH/2);
+  const poly=(pts,layer,closed)=>{ d+='0\nLWPOLYLINE\n8\n'+layer+'\n90\n'+pts.length+'\n70\n'+(closed?1:0)+'\n'; pts.forEach(v=>{d+='10\n'+X(v)+'\n20\n'+Y(v)+'\n';}); };
+  poly(out,'WALL',true); poly(inn,'WALL',true);
+  S.interiors.forEach(w=>poly(w.pts,'INNER',false));
+  const addDim=(a,b,mm,inner)=>{ const len=mm||(inner?innerMM(a,b):Math.round(dist(a,b)));
     d+='0\nTEXT\n8\nDIM\n10\n'+Math.round((X(a)+X(b))/2)+'\n20\n'+Math.round((Y(a)+Y(b))/2)+'\n40\n120\n1\n'+len+'\n'; };
-  for(let i=0;i<S.outline.length;i++) addDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i]);
-  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) addDim(w.pts[j],w.pts[j+1],w.mm[j]); });
+  for(let i=0;i<S.outline.length;i++) addDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i],true);
+  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) addDim(w.pts[j],w.pts[j+1],w.mm[j],false); });
   d+='0\nENDSEC\n0\nEOF\n';
   const blob=new Blob([d],{type:'application/dxf'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='kcc_실측도면_'+Date.now()+'.dxf';a.click();URL.revokeObjectURL(url);flash('DXF 저장됨');
 }
 
 /* =========================================================================
-   레이저 (Bosch GLM 50-27 CG)
+   레이저 (Bosch GLM 50-27 CG) — 활성 치수박스에 입력
    ========================================================================= */
 const BOSCH={ svc:'02a6c0d0-0451-4000-b000-fb3210111989',char:'02a6c0d1-0451-4000-b000-fb3210111989',
   enableCmd:new Uint8Array([0xc0,0x55,0x02,0x01,0x00,0x1a]),pktPrefix:[0xc0,0x55,0x10,0x06],
@@ -531,7 +553,7 @@ pop.innerHTML=`<h4>📡 레이저 측정기 <span style="font-weight:600;color:v
   <div class="st off" id="lsSt">연결 안됨</div>
   <button class="btn primary" id="lsConn" style="width:100%;justify-content:center">기기 검색 · 연결</button>
   <div class="val" id="lsVal">— <small>mm</small></div>
-  <div class="switch" style="margin-top:4px"><input type="checkbox" id="lsAuto" checked> 측정값을 선택한 벽에 자동 입력</div>
+  <div class="switch" style="margin-top:4px"><input type="checkbox" id="lsAuto" checked> 측정값을 초록 치수박스에 자동 입력</div>
   <div class="log" id="lsLog">안드로이드 Chrome · https 에서 연결하세요.\n</div>`;
 const $=id=>pop.querySelector('#'+id); let autofill=true;
 $('lsAuto').onchange=e=>autofill=e.target.checked;
@@ -550,15 +572,16 @@ async function connect(){ if(!navigator.bluetooth){ stat('err','Web Bluetooth �
     laser.char=await svc.getCharacteristic(BOSCH.char); await laser.char.startNotifications();
     laser.char.addEventListener('characteristicvaluechanged',e=>onRaw(e.target.value));
     await laser.char.writeValueWithResponse(BOSCH.enableCmd);
-    laser.connected=true; stat('on','연결됨 · '+(laser.device.name||'GLM')); lg('✔ 준비 완료 — 벽 선택 후 측정');
+    laser.connected=true; stat('on','연결됨 · '+(laser.device.name||'GLM')); lg('✔ 준비 완료 — 치수박스 탭 후 측정');
   }catch(err){ if(err.name==='NotFoundError'){stat('off','선택 취소');lg('· 취소');}else{stat('err','연결 실패');lg('✖ '+err.message);} } }
 function onRaw(dv){ const hex=[...new Uint8Array(dv.buffer)].map(b=>b.toString(16).padStart(2,'0')).join(' ');lg('◀ '+hex);
   let mm=null;try{mm=BOSCH.parse(dv);}catch(e){}
   if(mm!=null&&isFinite(mm)){ $('lsVal').innerHTML=mm+' <small>mm</small>';lg('  → '+mm+' mm');
-    if(autofill&&S.sel){ pushHist(); setMM(S.sel,mm); rebuildChain(S.sel); sbDimVal.textContent=mm; if(numpad.classList.contains('open')){npBuf=String(mm);npVal.textContent=npBuf;} render(); flash('→ '+mm+'mm 적용'); } } }
+    if(autofill&&S.activeBox){ applyMeasure(S.activeBox,mm); flash('→ '+mm+'mm 적용'); }
+    else if(autofill) flash('먼저 치수박스를 탭해 초록으로 만드세요'); } }
 
 /* ---------- 시작 ---------- */
-setMode('sketch'); apply(); render(); syncZoombar();
+setMode('sketch'); fitPaper(); syncZoombar();
 window.addEventListener('resize',()=>{ syncZoombar(); render(); });
 </script>
 </body>
