@@ -10,106 +10,98 @@
 <style>
   :root{
     --bg:#EEF1F5; --panel:#FFFFFF; --ink:#141821; --muted:#6B7686;
-    --line:#D7DDE6; --grid:#DFE4EC; --grid-strong:#CCD3DD;
-    --wall:#1B2430; --wall-fill:#F5F7FA;
+    --line:#D7DDE6; --grid:#E1E5EC; --grid-strong:#CFD6E0;
+    --wall:#1B2430; --wall-fill:#F5F7FA; --inner:#3B4658;
     --measured:#0E7C66; --unmeasured:#C2410C;
-    --sel:#1D6FE0; --accent:#E1251B;
+    --sel:#1D6FE0; --accent:#E1251B; --ink-soft:#8A93A2;
     --shadow:0 10px 34px rgba(20,30,50,.16);
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none;}
-  html,body{height:100%; margin:0;}
-  body{
-    font-family:"Space Grotesk",system-ui,sans-serif; color:var(--ink); background:var(--bg);
-    overflow:hidden; touch-action:none; display:flex; flex-direction:column;
-  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;margin:0;}
+  body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:var(--bg);
+    overflow:hidden;touch-action:none;display:flex;flex-direction:column;}
   .mono{font-family:"IBM Plex Mono",monospace;}
 
-  header{
-    height:54px; flex:0 0 54px; background:var(--panel); border-bottom:1px solid var(--line);
-    display:flex; align-items:center; gap:7px; padding:0 12px; z-index:40; overflow-x:auto;
-  }
-  .brand{display:flex; align-items:center; gap:9px; margin-right:4px; flex:0 0 auto;}
+  header{height:54px;flex:0 0 54px;background:var(--panel);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:7px;padding:0 12px;z-index:40;overflow-x:auto;}
+  .brand{display:flex;align-items:center;gap:9px;margin-right:4px;flex:0 0 auto;}
   .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--accent);}
-  .brand b{font-weight:700; font-size:15px; letter-spacing:-.2px; white-space:nowrap;}
-  .brand span{font-size:11px; color:var(--muted); font-weight:500; white-space:nowrap;}
+  .brand b{font-weight:700;font-size:15px;letter-spacing:-.2px;white-space:nowrap;}
+  .brand span{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;}
   .spacer{flex:1 0 8px;}
-  .btn{
-    height:38px; padding:0 13px; border-radius:9px; border:1px solid var(--line); background:var(--panel);
-    color:var(--ink); font-family:inherit; font-weight:600; font-size:13px; white-space:nowrap;
-    display:inline-flex; align-items:center; gap:6px; cursor:pointer; flex:0 0 auto;
-  }
+  .btn{height:38px;padding:0 13px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);font-family:inherit;font-weight:600;font-size:13px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:6px;cursor:pointer;flex:0 0 auto;}
   .btn:active{transform:translateY(1px);}
-  .btn.primary{background:var(--ink); color:#fff; border-color:var(--ink);}
-  .btn.on{background:#E7F6EE; border-color:#A6E4C8; color:#0E7A50;}
-  .btn.warn{color:var(--accent); border-color:#F0CBC8;}
-  .btn.icon{width:38px; padding:0; justify-content:center; font-size:17px;}
-  .btn:disabled{opacity:.4; pointer-events:none;}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .btn.go{background:var(--sel);color:#fff;border-color:var(--sel);}
+  .btn.on{background:#E7F6EE;border-color:#A6E4C8;color:#0E7A50;}
+  .btn.warn{color:var(--accent);border-color:#F0CBC8;}
+  .btn.icon{width:38px;padding:0;justify-content:center;font-size:17px;}
+  .btn:disabled{opacity:.4;pointer-events:none;}
 
-  .stage{flex:1; position:relative; min-height:0;}
-  svg#plan{width:100%; height:100%; display:block; background:var(--bg); touch-action:none;}
+  .stage{flex:1;position:relative;min-height:0;}
+  svg#plan{width:100%;height:100%;display:block;background:var(--bg);touch-action:none;}
 
-  .hint{
-    position:absolute; left:50%; top:14px; transform:translateX(-50%);
-    background:rgba(20,24,33,.92); color:#fff; padding:8px 15px; border-radius:22px;
-    font-size:12.5px; font-weight:600; pointer-events:none; z-index:20; white-space:nowrap;
-    box-shadow:var(--shadow);
-  }
+  .hint{position:absolute;left:50%;top:14px;transform:translateX(-50%);
+    background:rgba(20,24,33,.92);color:#fff;padding:8px 15px;border-radius:22px;
+    font-size:12.5px;font-weight:600;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:var(--shadow);}
   .hint b{color:#89B4FF;}
 
-  .zoombar{position:absolute; right:14px; bottom:calc(14px + var(--dimh,0px)); display:flex; flex-direction:column; gap:7px; z-index:20; transition:bottom .2s;}
+  /* 축척 눈금자 */
+  .scalebar{position:absolute;left:14px;top:14px;z-index:20;background:rgba(255,255,255,.9);
+    border:1px solid var(--line);border-radius:8px;padding:6px 9px;display:flex;align-items:center;gap:8px;
+    box-shadow:0 2px 8px rgba(20,30,50,.08);}
+  .scalebar .bar{height:8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);
+    border-bottom:2px solid var(--ink);}
+  .scalebar span{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--ink);}
+
+  .zoombar{position:absolute;right:14px;bottom:calc(14px + var(--dimh,0px));display:flex;flex-direction:column;
+    gap:7px;z-index:20;transition:bottom .2s;}
   .zoombar .btn{width:44px;height:44px;justify-content:center;font-size:20px;box-shadow:var(--shadow);}
 
-  /* 하단 치수 입력 바 */
-  .dimbar{
-    position:absolute; left:0; right:0; bottom:0; background:var(--panel); border-top:1px solid var(--line);
-    box-shadow:0 -8px 26px rgba(20,30,50,.10); z-index:30; padding:12px 14px calc(12px + env(safe-area-inset-bottom));
-    transform:translateY(110%); transition:transform .26s cubic-bezier(.4,0,.2,1);
-    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-  }
+  .dimbar{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+    box-shadow:0 -8px 26px rgba(20,30,50,.10);z-index:30;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    transform:translateY(115%);transition:transform .26s cubic-bezier(.4,0,.2,1);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .dimbar.open{transform:translateY(0);}
-  .dimbar .lab{font-size:13px; font-weight:700; display:flex; align-items:center; gap:7px;}
+  .dimbar .lab{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;}
   .dimbar .lab .sq{width:16px;height:16px;border-radius:3px;background:var(--sel);}
-  .dimbar input{
-    height:46px; width:130px; text-align:center; border:1.5px solid var(--line); border-radius:11px;
-    font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:600; color:var(--ink); background:#FBFCFE;
-    -webkit-user-select:text; user-select:text;
-  }
-  .dimbar input:focus{outline:none; border-color:var(--sel); background:#fff;}
-  .dimbar .unit{font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--muted); margin-left:-4px;}
+  .dimbar input{height:46px;width:130px;text-align:center;border:1.5px solid var(--line);border-radius:11px;
+    font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:600;color:var(--ink);background:#FBFCFE;
+    -webkit-user-select:text;user-select:text;}
+  .dimbar input:focus{outline:none;border-color:var(--sel);background:#fff;}
+  .dimbar .unit{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--muted);margin-left:-4px;}
   .dimbar .grow{flex:1 0 8px;}
   .dimbar .btn{height:46px;}
 
-  /* 레이저 팝오버 */
-  .laser-pop{
-    position:absolute; top:60px; right:12px; width:320px; max-width:calc(100vw - 24px);
-    background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
-    z-index:60; padding:14px; display:none;
-  }
+  .laser-pop{position:absolute;top:60px;right:12px;width:320px;max-width:calc(100vw - 24px);
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    z-index:60;padding:14px;display:none;}
   .laser-pop.open{display:block;}
-  .laser-pop h4{margin:0 0 8px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:7px;}
-  .laser-pop .st{font-size:12px; font-weight:600; margin-bottom:10px;}
+  .laser-pop h4{margin:0 0 8px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+  .laser-pop .st{font-size:12px;font-weight:600;margin-bottom:10px;}
   .st.off{color:var(--muted);} .st.on{color:var(--measured);} .st.err{color:var(--accent);}
-  .laser-pop .val{font-family:"IBM Plex Mono",monospace; font-size:28px; font-weight:600; text-align:center;
-    padding:10px; background:#F1F4F9; border-radius:10px; margin:10px 0;}
+  .laser-pop .val{font-family:"IBM Plex Mono",monospace;font-size:28px;font-weight:600;text-align:center;
+    padding:10px;background:#F1F4F9;border-radius:10px;margin:10px 0;}
   .laser-pop .val small{font-size:14px;color:var(--muted);}
-  .laser-pop .log{font-family:"IBM Plex Mono",monospace; font-size:9.5px; background:#0E1116; color:#8FE3B0;
-    border-radius:8px; padding:8px; height:70px; overflow-y:auto; white-space:pre-wrap; line-height:1.45; margin-top:8px;}
-  .switch{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600;}
+  .laser-pop .log{font-family:"IBM Plex Mono",monospace;font-size:9.5px;background:#0E1116;color:#8FE3B0;
+    border-radius:8px;padding:8px;height:66px;overflow-y:auto;white-space:pre-wrap;line-height:1.45;margin-top:8px;}
+  .switch{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;}
   .switch input{width:40px;height:22px;}
-
-  ::-webkit-scrollbar{width:8px;height:8px;}
-  ::-webkit-scrollbar-thumb{background:#C3CBD6; border-radius:8px;}
+  ::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#C3CBD6;border-radius:8px;}
 </style>
 </head>
 <body>
 
 <header>
   <div class="brand"><span class="dot"></span><b>KCC 실측</b><span>· 평면도</span></div>
-  <button class="btn primary" id="btnDraw">✎ 벽 그리기</button>
-  <button class="btn" id="btnDone" disabled>✓ 완료</button>
+  <button class="btn primary" id="btnSketch">✎ 손으로 그리기</button>
+  <button class="btn go" id="btnConvert" disabled>→ 도면 변환</button>
+  <button class="btn on" id="btnOrtho">⊾ 직각 90°</button>
   <div class="spacer"></div>
   <button class="btn" id="btnLaser">📡 레이저</button>
-  <button class="btn" id="btnExport">DXF 내보내기</button>
+  <button class="btn" id="btnExport">DXF</button>
   <button class="btn warn icon" id="btnUndo" title="되돌리기">↶</button>
   <button class="btn warn" id="btnClear">지우기</button>
 </header>
@@ -117,422 +109,446 @@
 <div class="stage">
   <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
   <div class="hint" id="hint"></div>
+  <div class="scalebar"><div class="bar" id="scaleLine"></div><span id="scaleLabel">1000mm</span></div>
   <div class="zoombar">
     <button class="btn icon" id="zIn">＋</button>
     <button class="btn icon" id="zOut">－</button>
     <button class="btn icon" id="zFit" title="화면 맞춤">⤢</button>
   </div>
-
-  <!-- 하단 치수 입력 -->
   <div class="dimbar" id="dimbar">
-    <div class="lab"><span class="sq"></span>벽 <span id="dbName" class="mono"></span></div>
+    <div class="lab"><span class="sq"></span><span id="dbName">벽</span></div>
     <input class="mono" id="dbInput" inputmode="numeric" placeholder="0"><span class="unit">mm</span>
     <div class="grow"></div>
     <button class="btn on" id="dbLaser">📡 레이저로 받기</button>
     <button class="btn primary" id="dbApply">적용</button>
     <button class="btn icon" id="dbClose">✕</button>
   </div>
-
-  <!-- 레이저 -->
   <div class="laser-pop" id="laserPop"></div>
 </div>
 
 <script>
 /* =========================================================================
-   KCC 평면도 — 모양 먼저 → 레이저로 치수 채우기
+   KCC 평면도 — 손스케치 → 도면 변환
    ========================================================================= */
 const svg=document.getElementById('plan');
 const NS='http://www.w3.org/2000/svg';
-const GRID=40, SNAP=20;
-const PX_PER_MM=0.06;          // 화면 픽셀 ↔ 실측 mm 환산 (1000mm = 60px)
-let vb={x:0,y:0,w:1600,h:1000}; // viewBox (팬/줌)
+const GRID=40;
+const PX_PER_MM=0.06;                 // 1000mm = 60 svg단위
+let vb={x:0,y:0,w:1600,h:1000};
 
 const S={
-  mode:'draw',      // 'draw' | 'edit'
-  pts:[],           // 그리는 중 임시 점
-  verts:[],         // 확정 정점 (정형화됨)
-  wallMM:[],        // 각 벽 실측 mm (없으면 0=미실측)
-  sel:-1,           // 선택된 벽 index
-  seq:1
+  mode:'sketch',        // 'sketch' | 'edit'
+  ortho:true,
+  strokes:[],           // 완료된 손스케치 [[{x,y}...], ...]
+  cur:null,             // 그리는 중 stroke
+  outline:[],           // 외곽 정점 (닫힘)
+  outlineMM:[],         // 외곽 벽 mm
+  interiors:[],         // 내부벽 [{pts:[...], mm:[...]}] (열림)
+  sel:null,             // {t:'o',w} | {t:'in',s,w}
 };
 let history=[];
-function snap(){ history.push(JSON.stringify({v:S.verts,m:S.wallMM})); if(history.length>50)history.shift(); }
-function undo(){ if(!history.length)return; const h=JSON.parse(history.pop());
-  S.verts=h.v; S.wallMM=h.m; S.sel=-1; closeDim(); render(); }
+function pushHist(){ history.push(JSON.stringify({o:S.outline,om:S.outlineMM,in:S.interiors}));
+  if(history.length>60)history.shift(); }
+function undo(){ if(!history.length){ flash('되돌릴 게 없어요'); return; }
+  const h=JSON.parse(history.pop());
+  S.outline=h.o; S.outlineMM=h.om; S.interiors=h.in; S.sel=null; closeDim();
+  if(!S.outline.length && !S.interiors.length && !S.strokes.length) setMode('sketch'); else render(); }
 
-/* ---------- 좌표 변환 ---------- */
-function toSvg(cx,cy){ const p=svg.createSVGPoint(); p.x=cx; p.y=cy;
-  const q=p.matrixTransform(svg.getScreenCTM().inverse()); return {x:q.x,y:q.y}; }
-const gsnap=v=>Math.round(v/SNAP)*SNAP;
+/* ---------- 기하 유틸 ---------- */
+function toSvg(cx,cy){ const p=svg.createSVGPoint();p.x=cx;p.y=cy;
+  const q=p.matrixTransform(svg.getScreenCTM().inverse());return {x:q.x,y:q.y}; }
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function unit(a,b){ const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1; return {x:dx/l,y:dy/l}; }
+function unit(a,b){ const dx=b.x-a.x,dy=b.y-a.y,l=Math.hypot(dx,dy)||1;return {x:dx/l,y:dy/l}; }
 function apply(){ svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
-function el(t,a={},p){ const e=document.createElementNS(NS,t); for(const k in a)e.setAttribute(k,a[k]); if(p)p.appendChild(e); return e; }
-function centroid(pts){ let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y;}); return {x:x/pts.length,y:y/pts.length}; }
+function el(t,a={},p){ const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e; }
+function centroid(pts){ let x=0,y=0;pts.forEach(p=>{x+=p.x;y+=p.y;});return {x:x/pts.length,y:y/pts.length}; }
+function distToSeg(p,a,b){ const dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy||1;
+  let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/L2; t=Math.max(0,Math.min(1,t));
+  const pr={x:a.x+t*dx,y:a.y+t*dy};return {d:dist(p,pr),t,proj:pr}; }
+const svPerPx=()=>vb.w/svg.clientWidth;
 
 /* =========================================================================
-   렌더링 (벽 = 각진 폴리곤, 라운딩 없음)
+   렌더링
    ========================================================================= */
 function render(){
-  apply(); svg.innerHTML='';
-  drawGrid();
+  apply(); svg.innerHTML=''; drawGrid();
 
-  if(S.verts.length>=2){
-    const ptsAttr=S.verts.map(v=>`${v.x},${v.y}`).join(' ');
-    // 벽 채움 + 외곽 (miter = 정확한 각)
-    el('polygon',{points:ptsAttr, fill:'var(--wall-fill)', stroke:'var(--wall)',
-      'stroke-width':7, 'stroke-linejoin':'miter', 'stroke-linecap':'butt', 'stroke-miterlimit':12}, svg);
-
-    const c=centroid(S.verts);
-    // 각 벽: 투명 히트라인 + 치수 라벨 + 선택 하이라이트
-    for(let i=0;i<S.verts.length;i++){
-      const a=S.verts[i], b=S.verts[(i+1)%S.verts.length];
-      if(i===S.verts.length-1 && S.verts.length<3) break;
-      const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
-      const n=wallNormal(a,b,c);
-      const mm=S.wallMM[i]||0;
-      const measured=mm>0;
-      const shown = measured? mm : Math.round(dist(a,b)/PX_PER_MM);
-
-      if(i===S.sel){ // 선택 하이라이트
-        el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'var(--sel)','stroke-width':11,
-          'stroke-linecap':'butt',opacity:.9},svg);
-      }
-      // 치수 라벨 (바깥쪽)
-      const lx=mid.x+n.x*26, ly=mid.y+n.y*26;
-      const g=el('g',{},svg);
-      const tw=String(shown).length*10+ (measured?14:26);
-      el('rect',{x:lx-tw/2,y:ly-13,width:tw,height:26,rx:6,
-        fill:'#fff',stroke:measured?'var(--measured)':'var(--unmeasured)','stroke-width':1.5},g);
-      const t=el('text',{x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'central',
-        'font-family':'IBM Plex Mono','font-size':14,'font-weight':600,
-        fill:measured?'var(--measured)':'var(--unmeasured)'},g);
-      t.textContent = measured? shown : shown+' ?';
-
-      // 히트라인 (탭 감지)
-      const hit=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'transparent','stroke-width':26},svg);
-      hit.style.cursor='pointer'; hit.dataset.wall=i;
+  if(S.mode==='edit'){
+    const c=S.outline.length?centroid(S.outline):{x:0,y:0};
+    // 외곽 폴리곤 (각진 모서리)
+    if(S.outline.length>=3){
+      el('polygon',{points:S.outline.map(v=>`${v.x},${v.y}`).join(' '),fill:'var(--wall-fill)',
+        stroke:'var(--wall)','stroke-width':7,'stroke-linejoin':'miter','stroke-linecap':'butt','stroke-miterlimit':12},svg);
     }
+    // 내부벽 (열린 폴리라인)
+    S.interiors.forEach(w=>{ if(w.pts.length>=2)
+      el('polyline',{points:w.pts.map(v=>`${v.x},${v.y}`).join(' '),fill:'none',
+        stroke:'var(--inner)','stroke-width':6,'stroke-linejoin':'miter','stroke-linecap':'butt'},svg); });
+
+    // 선택 하이라이트
+    if(S.sel){ const seg=selSeg(S.sel); if(seg)
+      el('line',{x1:seg.a.x,y1:seg.a.y,x2:seg.b.x,y2:seg.b.y,stroke:'var(--sel)','stroke-width':11,opacity:.85},svg); }
+
+    // 치수 라벨 + 히트라인 : 외곽
+    for(let i=0;i<S.outline.length;i++){ const a=S.outline[i],b=S.outline[(i+1)%S.outline.length];
+      dimLabel(a,b,S.outlineMM[i],c); hitLine(a,b,{t:'o',w:i}); }
+    // 내부벽
+    S.interiors.forEach((w,s)=>{ for(let j=0;j<w.pts.length-1;j++){ const a=w.pts[j],b=w.pts[j+1];
+      dimLabel(a,b,w.mm[j],c,true); hitLine(a,b,{t:'in',s,w:j}); } });
+
     // 정점 (각진 사각)
-    S.verts.forEach(v=>el('rect',{x:v.x-5,y:v.y-5,width:10,height:10,
-      fill:'#fff',stroke:'var(--wall)','stroke-width':2},svg));
+    S.outline.forEach(v=>el('rect',{x:v.x-5,y:v.y-5,width:10,height:10,fill:'#fff',stroke:'var(--wall)','stroke-width':2},svg));
+    S.interiors.forEach(w=>w.pts.forEach((v,idx)=>{ const end=idx===0||idx===w.pts.length-1;
+      el('circle',{cx:v.x,cy:v.y,r:end?6:5,fill:end?'#FFF4E6':'#fff',stroke:'var(--inner)','stroke-width':2},svg); }));
   }
 
-  // 그리는 중
-  if(S.mode==='draw' && S.pts.length){
-    for(let i=0;i<S.pts.length-1;i++){ const a=S.pts[i],b=S.pts[i+1];
-      el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'var(--wall)','stroke-width':6,
-        'stroke-linecap':'butt','stroke-linejoin':'miter',opacity:.85},svg); }
-    if(rubber){ const last=S.pts[S.pts.length-1];
-      el('line',{x1:last.x,y1:last.y,x2:rubber.x,y2:rubber.y,stroke:'var(--muted)',
-        'stroke-width':2,'stroke-dasharray':'7 6'},svg); }
-    S.pts.forEach((p,i)=>el('rect',{x:p.x-6,y:p.y-6,width:12,height:12,
-      fill:i===0?'var(--accent)':'#fff',stroke:'var(--wall)','stroke-width':2},svg));
+  // 손스케치 (그리는 중 + 완료된 것)
+  if(S.mode==='sketch'){
+    S.strokes.forEach(st=>strokePath(st,'#9AA4B2'));
+    if(S.cur) strokePath(S.cur,'var(--accent)');
   }
-  updateHint();
+  updateHint(); updateScale();
 }
 function drawGrid(){
   const g=el('g',{},svg);
-  const x0=Math.floor(vb.x/GRID)*GRID, y0=Math.floor(vb.y/GRID)*GRID;
-  for(let x=x0;x<vb.x+vb.w;x+=GRID){ const strong=Math.round(x/GRID)%5===0;
-    el('line',{x1:x,y1:vb.y,x2:x,y2:vb.y+vb.h,stroke:strong?'var(--grid-strong)':'var(--grid)','stroke-width':strong?1.2:1},g); }
-  for(let y=y0;y<vb.y+vb.h;y+=GRID){ const strong=Math.round(y/GRID)%5===0;
-    el('line',{x1:vb.x,y1:y,x2:vb.x+vb.w,y2:y,stroke:strong?'var(--grid-strong)':'var(--grid)','stroke-width':strong?1.2:1},g); }
+  const x0=Math.floor(vb.x/GRID)*GRID,y0=Math.floor(vb.y/GRID)*GRID;
+  for(let x=x0;x<vb.x+vb.w;x+=GRID){ const s=Math.round(x/GRID)%5===0;
+    el('line',{x1:x,y1:vb.y,x2:x,y2:vb.y+vb.h,stroke:s?'var(--grid-strong)':'var(--grid)','stroke-width':s?1.2:1},g); }
+  for(let y=y0;y<vb.y+vb.h;y+=GRID){ const s=Math.round(y/GRID)%5===0;
+    el('line',{x1:vb.x,y1:y,x2:vb.x+vb.w,y2:y,stroke:s?'var(--grid-strong)':'var(--grid)','stroke-width':s?1.2:1},g); }
 }
-function wallNormal(a,b,c){ const d=unit(a,b); let n={x:-d.y,y:d.x};
-  const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
-  if((mid.x-c.x)*n.x+(mid.y-c.y)*n.y<0){ n.x=-n.x; n.y=-n.y; } return n; }
+function strokePath(st,color){ if(st.length<2){ if(st.length)el('circle',{cx:st[0].x,cy:st[0].y,r:4,fill:color},svg); return; }
+  el('polyline',{points:st.map(p=>`${p.x},${p.y}`).join(' '),fill:'none',stroke:color,
+    'stroke-width':4,'stroke-linejoin':'round','stroke-linecap':'round',opacity:.9},svg); }
+function normal(a,b,c){ const d=unit(a,b);let n={x:-d.y,y:d.x};
+  const m={x:(a.x+b.x)/2,y:(a.y+b.y)/2}; if((m.x-c.x)*n.x+(m.y-c.y)*n.y<0){n.x=-n.x;n.y=-n.y;} return n; }
+function dimLabel(a,b,mm,c,inner){
+  const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2}; const n=normal(a,b,c);
+  const measured=mm>0; const shown=measured?mm:Math.round(dist(a,b)/PX_PER_MM);
+  const off=inner?16:24; const lx=mid.x+n.x*off, ly=mid.y+n.y*off;
+  const txt=measured?String(shown):shown+' ?'; const tw=txt.length*8.5+12;
+  const g=el('g',{},svg);
+  el('rect',{x:lx-tw/2,y:ly-12,width:tw,height:24,rx:6,fill:'#fff',
+    stroke:measured?'var(--measured)':'var(--unmeasured)','stroke-width':1.4},g);
+  const t=el('text',{x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono',
+    'font-size':13,'font-weight':600,fill:measured?'var(--measured)':'var(--unmeasured)'},g); t.textContent=txt;
+}
+function hitLine(a,b,ref){ const h=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'transparent','stroke-width':26},svg);
+  h.style.cursor='pointer'; h.dataset.ref=JSON.stringify(ref); }
+function selSeg(sel){ if(sel.t==='o'){ const n=S.outline.length; if(!n)return null;
+    return {a:S.outline[sel.w],b:S.outline[(sel.w+1)%n]}; }
+  const w=S.interiors[sel.s]; if(!w)return null; return {a:w.pts[sel.w],b:w.pts[sel.w+1]}; }
+
+/* 축척 눈금자 */
+function updateScale(){
+  const ppm=PX_PER_MM/svPerPx();          // 화면 픽셀 / mm
+  const nice=[100,200,500,1000,2000,5000,10000,20000];
+  let m=1000; for(const cand of nice){ const w=cand*ppm; if(w>=70&&w<=200){m=cand;break;} if(w>200){m=cand;break;} }
+  document.getElementById('scaleLine').style.width=Math.round(m*ppm)+'px';
+  document.getElementById('scaleLine').style.height='8px';
+  document.getElementById('scaleLabel').textContent = m>=1000? (m/1000)+'m' : m+'mm';
+}
 
 /* =========================================================================
-   정형화 (직각 스냅) + 치수 재구성
+   Douglas–Peucker 단순화 + 직각 정형화
    ========================================================================= */
-function orthogonalize(pts){
-  if(pts.length===4){ // 사각형 → 완벽한 축정렬 직사각형
-    const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
-    const x1=Math.min(...xs), x2=Math.max(...xs), y1=Math.min(...ys), y2=Math.max(...ys);
-    // 그린 방향(시계/반시계) 유지
-    const cw=signedArea(pts)>0;
-    return cw? [{x:x1,y:y1},{x:x2,y:y1},{x:x2,y:y2},{x:x1,y:y2}]
-             : [{x:x1,y:y1},{x:x1,y:y2},{x:x2,y:y2},{x:x2,y:y1}];
-  }
-  // 일반: 각 변 방향을 수평/수직 스냅, 마지막 정점은 시작점으로 자동 닫힘
-  const out=[{x:pts[0].x,y:pts[0].y}];
-  for(let i=0;i<pts.length-1;i++){
-    const a=pts[i], b=pts[i+1]; let dx=b.x-a.x, dy=b.y-a.y; const L=Math.hypot(dx,dy);
-    if(Math.abs(dx)>=Math.abs(dy)){ dx=Math.sign(dx)*L; dy=0; } else { dx=0; dy=Math.sign(dy)*L; }
-    out.push({x:out[i].x+dx, y:out[i].y+dy});
-  }
-  return out;
+function rdp(pts,eps){
+  if(pts.length<3) return pts.slice();
+  const a=pts[0],b=pts[pts.length-1]; let dmax=0,idx=0;
+  for(let i=1;i<pts.length-1;i++){ const d=distToSeg(pts[i],a,b).d; if(d>dmax){dmax=d;idx=i;} }
+  if(dmax>eps){ const l=rdp(pts.slice(0,idx+1),eps),r=rdp(pts.slice(idx),eps); return l.slice(0,-1).concat(r); }
+  return [a,b];
 }
-function signedArea(pts){ let s=0; for(let i=0;i<pts.length;i++){ const a=pts[i],b=pts[(i+1)%pts.length];
-  s+=(a.x*b.y-b.x*a.y); } return s/2; }
+function orthoChain(pts,closed){
+  const n=pts.length;
+  if(closed && n===4){ // 사각형 → 완벽 직사각
+    const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+    const x1=Math.min(...xs),x2=Math.max(...xs),y1=Math.min(...ys),y2=Math.max(...ys);
+    let s=0; for(let i=0;i<4;i++){const a=pts[i],b=pts[(i+1)%4];s+=(a.x*b.y-b.x*a.y);}
+    return s>0? [{x:x1,y:y1},{x:x2,y:y1},{x:x2,y:y2},{x:x1,y:y2}]
+              : [{x:x1,y:y1},{x:x1,y:y2},{x:x2,y:y2},{x:x2,y:y1}];
+  }
+  const nv=[{x:pts[0].x,y:pts[0].y}];
+  const last=closed?n:n-1;
+  for(let i=0;i<last-0 && i<n-1;i++){ const a=pts[i],b=pts[i+1];
+    let dx=b.x-a.x,dy=b.y-a.y; const L=Math.hypot(dx,dy);
+    if(Math.abs(dx)>=Math.abs(dy)){dx=Math.sign(dx)*L;dy=0;} else {dx=0;dy=Math.sign(dy)*L;}
+    nv.push({x:nv[i].x+dx,y:nv[i].y+dy});
+  }
+  return nv;
+}
+/* 점을 기존 벽(외곽+내부)에 투영 스냅 */
+function snapToWalls(p,ignoreInterior){
+  let best=null; const R=60;
+  const consider=(a,b)=>{ const r=distToSeg(p,a,b); if(r.d<R && (!best||r.d<best.d)) best={d:r.d,proj:r.proj}; };
+  for(let i=0;i<S.outline.length;i++) consider(S.outline[i],S.outline[(i+1)%S.outline.length]);
+  S.interiors.forEach((w,si)=>{ if(si===ignoreInterior)return; for(let j=0;j<w.pts.length-1;j++) consider(w.pts[j],w.pts[j+1]); });
+  return best? best.proj : p;
+}
 
-/* 실측 mm대로 도면 재구성 (첫 정점 고정, 방향 유지, 미실측 벽은 현재 길이 유지) */
-function rebuild(){
-  if(S.verts.length<3) return;
-  const dirs=[], lens=[];
-  for(let i=0;i<S.verts.length;i++){ const a=S.verts[i], b=S.verts[(i+1)%S.verts.length];
-    dirs.push(unit(a,b)); lens.push(S.wallMM[i]? S.wallMM[i]*PX_PER_MM : dist(a,b)); }
-  const nv=[{x:S.verts[0].x,y:S.verts[0].y}];
-  for(let i=0;i<S.verts.length-1;i++)
-    nv.push({x:nv[i].x+dirs[i].x*lens[i], y:nv[i].y+dirs[i].y*lens[i]});
-  S.verts=nv; // 마지막 벽은 시작점으로 자동 연결
+function convert(){
+  const strokes=S.cur? S.strokes.concat([S.cur]) : S.strokes.slice();
+  if(!strokes.length){ flash('먼저 벽 모양을 그려주세요'); return; }
+  pushHist();
+  const simplified=strokes.map(st=>rdp(st,14)).filter(s=>s.length>=2);
+  let outlineDone=!!S.outline.length;
+  const newInteriors=[];
+  simplified.forEach(sp=>{
+    const closed = sp.length>=4 && dist(sp[0],sp[sp.length-1])<45 && chainLen(sp)>140;
+    if(closed && !outlineDone){
+      let pts=sp.slice(0,-1);                      // 마지막(=시작 근처) 제거
+      if(S.ortho) pts=orthoChain(pts,true);
+      S.outline=pts; S.outlineMM=new Array(pts.length).fill(0); outlineDone=true;
+    } else {
+      let pts=S.ortho? orthoChain(sp,false) : sp.slice();
+      pts[0]=snapToWalls(pts[0]); pts[pts.length-1]=snapToWalls(pts[pts.length-1]);
+      newInteriors.push({pts, mm:new Array(pts.length-1).fill(0)});
+    }
+  });
+  S.interiors=S.interiors.concat(newInteriors);
+  S.strokes=[]; S.cur=null; S.sel=null;
+  setMode('edit'); fit();
+  flash('벽을 탭해서 실측 치수를 넣으세요');
 }
+function chainLen(pts){ let s=0; for(let i=0;i<pts.length-1;i++)s+=dist(pts[i],pts[i+1]); return s; }
 
 /* =========================================================================
-   포인터: 핀치 줌(2손가락) · 팬(1손가락) · 탭
+   포인터 : 스케치 / 핀치 줌 / 팬 / 정점 드래그 / 탭
    ========================================================================= */
 const pointers=new Map();
-let startPan=null, moved=false, lastPinch=null, rubber=null;
+let startPan=null,moved=false,lastPinch=null,dragV=null;
 
 svg.addEventListener('pointerdown',e=>{
-  svg.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===1){ startPan={sx:e.clientX,sy:e.clientY,vbx:vb.x,vby:vb.y}; moved=false; }
-  if(pointers.size===2){ lastPinch=null; startPan=null; }
+  if(pointers.size===2){ lastPinch=null; startPan=null; S.cur=null; dragV=null; return; }
+  if(pointers.size!==1) return;
+  moved=false;
+  if(S.mode==='sketch'){ const p=toSvg(e.clientX,e.clientY); S.cur=[p]; return; }
+  // edit: 정점 위면 드래그, 아니면 팬 대기
+  const v=vertexAt(e.clientX,e.clientY);
+  if(v){ dragV=v; pushHist(); }
+  else startPan={sx:e.clientX,sy:e.clientY,vbx:vb.x,vby:vb.y};
 });
 svg.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-
   if(pointers.size>=2){ pinch(); return; }
-
-  // 1손가락
-  if(S.mode==='draw' && S.pts.length){ const p=toSvg(e.clientX,e.clientY); rubber={x:gsnap(p.x),y:gsnap(p.y)}; }
-  if(startPan){
-    const dx=e.clientX-startPan.sx, dy=e.clientY-startPan.sy;
-    if(Math.abs(dx)+Math.abs(dy)>7){ moved=true;
-      const sc=vb.w/svg.clientWidth; vb.x=startPan.vbx-dx*sc; vb.y=startPan.vby-dy*sc; apply(); }
-  }
-  if(S.mode==='draw' && S.pts.length) render();
+  if(S.mode==='sketch'){ if(S.cur){ const p=toSvg(e.clientX,e.clientY);
+      if(dist(p,S.cur[S.cur.length-1])>4){ S.cur.push(p); render(); } } return; }
+  if(dragV){ moveVertex(dragV,toSvg(e.clientX,e.clientY)); render(); return; }
+  if(startPan){ const dx=e.clientX-startPan.sx,dy=e.clientY-startPan.sy;
+    if(Math.abs(dx)+Math.abs(dy)>7){ moved=true; const sc=svPerPx();
+      vb.x=startPan.vbx-dx*sc; vb.y=startPan.vby-dy*sc; apply(); render(); } }
 });
 svg.addEventListener('pointerup',e=>{
-  const wasSingle = pointers.size===1;
-  const cx=e.clientX, cy=e.clientY;
-  pointers.delete(e.pointerId);
-  if(pointers.size<2) lastPinch=null;
-  if(pointers.size===0 && wasSingle && !moved) tap(cx,cy);
+  const single=pointers.size===1; const cx=e.clientX,cy=e.clientY;
+  pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null;
+  if(!single){ return; }
+  if(S.mode==='sketch'){ if(S.cur&&S.cur.length>=2){ S.strokes.push(S.cur); }
+    S.cur=null; document.getElementById('btnConvert').disabled=!S.strokes.length; render(); return; }
+  if(dragV){ finalizeDrag(dragV); dragV=null; render(); return; }
+  if(startPan&&!moved) tap(cx,cy);
   startPan=null;
 });
-svg.addEventListener('pointercancel',e=>{ pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; });
+svg.addEventListener('pointercancel',e=>{ pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; S.cur=null; dragV=null; });
 
-function pinch(){
-  const ps=[...pointers.values()];
-  const d=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
-  const mid={x:(ps[0].x+ps[1].x)/2, y:(ps[0].y+ps[1].y)/2};
-  if(lastPinch){
-    const factor=lastPinch.d/d;                 // 벌리면 확대(viewBox 축소)
-    const p=toSvg(mid.x,mid.y);
-    vb.w*=factor; vb.h*=factor;
-    vb.x=p.x-(p.x-vb.x)*factor; vb.y=p.y-(p.y-vb.y)*factor;
-    const sc=vb.w/svg.clientWidth;              // 두 손가락 이동 = 팬
-    vb.x-=(mid.x-lastPinch.mid.x)*sc; vb.y-=(mid.y-lastPinch.mid.y)*sc;
-    apply();
-  }
+function pinch(){ const ps=[...pointers.values()];
+  const d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y);
+  const mid={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
+  if(lastPinch){ const f=lastPinch.d/d; const p=toSvg(mid.x,mid.y);
+    vb.w*=f; vb.h*=f; vb.x=p.x-(p.x-vb.x)*f; vb.y=p.y-(p.y-vb.y)*f;
+    const sc=svPerPx(); vb.x-=(mid.x-lastPinch.mid.x)*sc; vb.y-=(mid.y-lastPinch.mid.y)*sc; apply(); render(); }
   lastPinch={d,mid};
 }
+
+/* 정점 탐색/이동 */
+function vertexAt(cx,cy){ const p=toSvg(cx,cy); const R=22*svPerPx();
+  for(let i=0;i<S.outline.length;i++) if(dist(p,S.outline[i])<R) return {t:'o',i};
+  for(let s=0;s<S.interiors.length;s++){ const w=S.interiors[s];
+    for(let i=0;i<w.pts.length;i++) if(dist(p,w.pts[i])<R) return {t:'in',s,i}; }
+  return null;
+}
+function axisH(a,b){ return Math.abs(b.x-a.x)>=Math.abs(b.y-a.y); } // 수평이면 true
+function moveVertex(v,np){
+  if(v.t==='o'){ const arr=S.outline,n=arr.length,prev=(v.i-1+n)%n,next=(v.i+1)%n;
+    if(S.ortho){ const ph=axisH(arr[prev],arr[v.i]), nh=axisH(arr[v.i],arr[next]);
+      arr[v.i]={x:np.x,y:np.y};
+      if(ph) arr[prev]={x:arr[prev].x,y:np.y}; else arr[prev]={x:np.x,y:arr[prev].y};
+      if(nh) arr[next]={x:arr[next].x,y:np.y}; else arr[next]={x:np.x,y:arr[next].y};
+    } else arr[v.i]={x:np.x,y:np.y};
+  } else { const w=S.interiors[v.s],pts=w.pts,n=pts.length;
+    if(S.ortho){ pts[v.i]={x:np.x,y:np.y};
+      if(v.i>0){ const ph=axisH(pts[v.i-1],pts[v.i]); if(ph)pts[v.i-1]={x:pts[v.i-1].x,y:np.y}; else pts[v.i-1]={x:np.x,y:pts[v.i-1].y}; }
+      if(v.i<n-1){ const nh=axisH(pts[v.i],pts[v.i+1]); if(nh)pts[v.i+1]={x:pts[v.i+1].x,y:np.y}; else pts[v.i+1]={x:np.x,y:pts[v.i+1].y}; }
+    } else pts[v.i]={x:np.x,y:np.y};
+  }
+}
+function finalizeDrag(v){
+  // 내부벽 끝점이면 벽에 다시 스냅
+  if(v.t==='in'){ const w=S.interiors[v.s];
+    if(v.i===0) w.pts[0]=snapToWalls(w.pts[0],v.s);
+    if(v.i===w.pts.length-1) w.pts[v.i]=snapToWalls(w.pts[v.i],v.s); }
+  // 실측값(mm) 화면길이 기준 갱신
+  recalcMM();
+}
+function recalcMM(){
+  for(let i=0;i<S.outline.length;i++) if(S.outlineMM[i]>0)
+    S.outlineMM[i]=Math.round(dist(S.outline[i],S.outline[(i+1)%S.outline.length])/PX_PER_MM);
+  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) if(w.mm[j]>0)
+    w.mm[j]=Math.round(dist(w.pts[j],w.pts[j+1])/PX_PER_MM); });
+}
+
 function tap(cx,cy){
-  const p=toSvg(cx,cy);
-  if(S.mode==='draw'){ addPoint(p); return; }
-  // edit: 벽 히트 감지
   const hit=document.elementFromPoint(cx,cy);
-  if(hit && hit.dataset && hit.dataset.wall!==undefined){ selectWall(+hit.dataset.wall); }
-  else { S.sel=-1; closeDim(); render(); }
+  if(hit&&hit.dataset&&hit.dataset.ref){ selectWall(JSON.parse(hit.dataset.ref)); }
+  else { S.sel=null; closeDim(); render(); }
 }
 
 /* =========================================================================
-   그리기 → 완료(정형화)
+   벽 선택 → 치수 입력
    ========================================================================= */
-function addPoint(p){
-  const sp={x:gsnap(p.x),y:gsnap(p.y)};
-  if(S.pts.length>=3 && dist(sp,S.pts[0])<26){ finish(); return; }
-  S.pts.push(sp); rubber=null;
-  document.getElementById('btnDone').disabled = S.pts.length<3;
-  render();
-}
-function finish(){
-  if(S.pts.length<3){ flash('점을 3개 이상 찍어주세요'); return; }
-  snap();
-  S.verts=orthogonalize(S.pts);
-  S.wallMM=new Array(S.verts.length).fill(0);
-  S.pts=[]; rubber=null; S.sel=-1;
-  setMode('edit'); fit();
-  flash('벽을 탭해서 실측 치수를 넣으세요');
-}
-
-/* =========================================================================
-   벽 선택 → 치수 입력 (수동/레이저)
-   ========================================================================= */
-const dimbar=document.getElementById('dimbar');
-const dbName=document.getElementById('dbName'), dbInput=document.getElementById('dbInput');
-function selectWall(i){ S.sel=i; render();
-  dbName.textContent='#'+(i+1);
-  dbInput.value=S.wallMM[i]||'';
-  dimbar.classList.add('open'); syncZoombar();
+const dimbar=document.getElementById('dimbar'),dbName=document.getElementById('dbName'),dbInput=document.getElementById('dbInput');
+function curMM(sel){ return sel.t==='o'? S.outlineMM[sel.w] : S.interiors[sel.s].mm[sel.w]; }
+function setMM(sel,mm){ if(sel.t==='o')S.outlineMM[sel.w]=mm; else S.interiors[sel.s].mm[sel.w]=mm; }
+function selectWall(ref){ S.sel=ref; render();
+  dbName.textContent = ref.t==='o'? '외벽 #'+(ref.w+1) : '내부벽';
+  dbInput.value=curMM(ref)||''; dimbar.classList.add('open'); syncZoombar();
   setTimeout(()=>dbInput.focus(),50);
 }
 function closeDim(){ dimbar.classList.remove('open'); syncZoombar(); }
 function syncZoombar(){ document.documentElement.style.setProperty('--dimh',
-  dimbar.classList.contains('open')? (dimbar.offsetHeight+'px'):'0px'); }
-function applyDim(){
-  if(S.sel<0) return; const mm=parseInt(dbInput.value)||0;
-  snap(); S.wallMM[S.sel]=mm; rebuild(); render();
+  dimbar.classList.contains('open')?(dimbar.offsetHeight+'px'):'0px'); }
+function rebuildChain(sel){
+  if(sel.t==='o'){ const n=S.outline.length; if(n<3)return;
+    const dirs=[],lens=[];
+    for(let i=0;i<n;i++){ dirs.push(unit(S.outline[i],S.outline[(i+1)%n])); lens.push(S.outlineMM[i]?S.outlineMM[i]*PX_PER_MM:dist(S.outline[i],S.outline[(i+1)%n])); }
+    const nv=[{...S.outline[0]}]; for(let i=0;i<n-1;i++) nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]});
+    S.outline=nv;
+  } else { const w=S.interiors[sel.s],n=w.pts.length;
+    const dirs=[],lens=[]; for(let i=0;i<n-1;i++){ dirs.push(unit(w.pts[i],w.pts[i+1])); lens.push(w.mm[i]?w.mm[i]*PX_PER_MM:dist(w.pts[i],w.pts[i+1])); }
+    const nv=[{...w.pts[0]}]; for(let i=0;i<n-1;i++) nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]});
+    w.pts=nv;
+  }
 }
+function applyDim(){ if(!S.sel)return; const mm=parseInt(dbInput.value)||0;
+  pushHist(); setMM(S.sel,mm); rebuildChain(S.sel); render(); }
 document.getElementById('dbApply').onclick=()=>{ applyDim(); flash('치수 적용됨'); };
-document.getElementById('dbClose').onclick=()=>{ S.sel=-1; closeDim(); render(); };
-document.getElementById('dbLaser').onclick=()=>{
-  if(!laser.connected){ document.getElementById('laserPop').classList.add('open'); flash('먼저 레이저를 연결하세요'); return; }
-  flash('측정기 버튼을 누르세요 — 값이 이 벽에 들어갑니다');
-};
+document.getElementById('dbClose').onclick=()=>{ S.sel=null; closeDim(); render(); };
+document.getElementById('dbLaser').onclick=()=>{ if(!laser.connected){ document.getElementById('laserPop').classList.add('open'); flash('먼저 레이저를 연결하세요'); return; }
+  flash('측정기 버튼을 누르면 이 벽에 들어갑니다'); };
 dbInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyDim(); dbInput.blur(); } });
 
 /* =========================================================================
-   줌 버튼 / 화면 맞춤
+   줌 / 화면맞춤
    ========================================================================= */
-function zoomAt(cx,cy,f){ const p=toSvg(cx,cy); vb.w*=f; vb.h*=f;
-  vb.x=p.x-(p.x-vb.x)*f; vb.y=p.y-(p.y-vb.y)*f; apply(); }
-svg.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY, e.deltaY>0?1.12:0.9); },{passive:false});
+function zoomAt(cx,cy,f){ const p=toSvg(cx,cy); vb.w*=f;vb.h*=f; vb.x=p.x-(p.x-vb.x)*f; vb.y=p.y-(p.y-vb.y)*f; apply(); render(); }
+svg.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY,e.deltaY>0?1.12:0.9); },{passive:false});
 document.getElementById('zIn').onclick=()=>zoomAt(svg.clientWidth/2,svg.clientHeight/2,0.82);
 document.getElementById('zOut').onclick=()=>zoomAt(svg.clientWidth/2,svg.clientHeight/2,1.22);
 document.getElementById('zFit').onclick=fit;
-function fit(){
-  const pts=S.verts.length?S.verts:S.pts;
-  if(!pts.length){ vb={x:0,y:0,w:1600,h:1000}; apply(); render(); return; }
-  let a=1e9,b=1e9,c=-1e9,d=-1e9;
-  pts.forEach(p=>{a=Math.min(a,p.x);b=Math.min(b,p.y);c=Math.max(c,p.x);d=Math.max(d,p.y);});
-  const pad=160; a-=pad;b-=pad;c+=pad;d+=pad;
-  const w=c-a,h=d-b,ar=svg.clientWidth/svg.clientHeight; let W=w,H=h;
-  if(w/h>ar)H=w/ar; else W=h*ar;
-  vb={x:a-(W-w)/2,y:b-(H-h)/2,w:W,h:H}; apply(); render();
-}
+function allPts(){ let a=[...S.outline]; S.interiors.forEach(w=>a=a.concat(w.pts));
+  S.strokes.forEach(s=>a=a.concat(s)); if(S.cur)a=a.concat(S.cur); return a; }
+function fit(){ const pts=allPts(); if(!pts.length){ vb={x:0,y:0,w:1600,h:1000}; apply(); render(); return; }
+  let a=1e9,b=1e9,c=-1e9,d=-1e9; pts.forEach(p=>{a=Math.min(a,p.x);b=Math.min(b,p.y);c=Math.max(c,p.x);d=Math.max(d,p.y);});
+  const pad=170; a-=pad;b-=pad;c+=pad;d+=pad; const w=c-a,h=d-b,ar=svg.clientWidth/svg.clientHeight; let W=w,H=h;
+  if(w/h>ar)H=w/ar; else W=h*ar; vb={x:a-(W-w)/2,y:b-(H-h)/2,w:W,h:H}; apply(); render(); }
 
 /* =========================================================================
-   툴바
+   툴바 / 힌트
    ========================================================================= */
 function setMode(m){ S.mode=m;
-  document.getElementById('btnDraw').classList.toggle('primary',m==='draw');
-  document.getElementById('btnDone').disabled=!(m==='draw'&&S.pts.length>=3);
-  if(m==='draw'){ S.sel=-1; closeDim(); }
-  render();
+  document.getElementById('btnSketch').classList.toggle('primary',m==='sketch');
+  document.getElementById('btnConvert').disabled = !(m==='sketch'&&(S.strokes.length||S.cur));
+  if(m==='sketch'){ S.sel=null; closeDim(); } render();
 }
-document.getElementById('btnDraw').onclick=()=>{
-  if(S.verts.length && !confirm('새로 그리면 지금 도면이 지워집니다. 계속할까요?')) return;
-  snap(); S.verts=[];S.wallMM=[];S.pts=[];S.sel=-1; closeDim(); setMode('draw');
-};
-document.getElementById('btnDone').onclick=finish;
+document.getElementById('btnSketch').onclick=()=>{ setMode('sketch'); flash('벽 모양을 손으로 슥 그리세요'); };
+document.getElementById('btnConvert').onclick=convert;
+document.getElementById('btnOrtho').onclick=()=>{ S.ortho=!S.ortho;
+  document.getElementById('btnOrtho').classList.toggle('on',S.ortho);
+  document.getElementById('btnOrtho').textContent = S.ortho?'⊾ 직각 90°':'⊾ 직각 OFF'; flash(S.ortho?'직각 90° 켜짐':'직각 꺼짐'); };
 document.getElementById('btnUndo').onclick=undo;
 document.getElementById('btnClear').onclick=()=>{ if(!confirm('전체 지울까요?'))return;
-  snap(); S.verts=[];S.wallMM=[];S.pts=[];S.sel=-1; closeDim(); vb={x:0,y:0,w:1600,h:1000}; setMode('draw'); };
+  pushHist(); S.outline=[];S.outlineMM=[];S.interiors=[];S.strokes=[];S.cur=null;S.sel=null;
+  closeDim(); vb={x:0,y:0,w:1600,h:1000}; setMode('sketch'); };
 document.getElementById('btnExport').onclick=exportDXF;
 
-/* =========================================================================
-   힌트
-   ========================================================================= */
 const hintEl=document.getElementById('hint'); let flashT=null;
-function updateHint(){
-  let m;
-  if(S.mode==='draw') m = S.pts.length? '벽 <b>모서리</b>를 순서대로 탭 · 시작점 다시 탭 = 완성' : '벽 <b>모서리</b>를 탭해서 모양을 그리세요';
-  else if(S.sel>=0) m = '이 벽을 <b>레이저로 측정</b>하거나 치수를 입력하세요';
-  else m = '벽을 탭해 <b>치수 입력</b> · 두 손가락 확대/축소 · 한 손가락 이동';
+function updateHint(){ let m;
+  if(S.mode==='sketch') m = (S.strokes.length||S.cur)? '더 그리거나 <b>→ 도면 변환</b>을 누르세요 (외곽·내부벽 함께)' : '벽 모양을 손으로 <b>슥</b> 그리세요 · 외곽은 닫고, 칸막이는 열어서';
+  else if(S.sel) m = '이 벽을 <b>레이저로 측정</b>하거나 치수 입력';
+  else m = '벽 탭 = 치수입력 · 코너 끌기 = 수정 · 두 손가락 = 확대';
   hintEl.innerHTML=m;
 }
-function flash(t){ hintEl.innerHTML=t; clearTimeout(flashT); flashT=setTimeout(updateHint,1700); }
+function flash(t){ hintEl.innerHTML=t; clearTimeout(flashT); flashT=setTimeout(updateHint,1800); }
 
 /* =========================================================================
-   DXF 내보내기 (LWPOLYLINE + 치수 TEXT)
+   DXF 내보내기
    ========================================================================= */
 function exportDXF(){
-  if(S.verts.length<3){ flash('먼저 평면도를 그려주세요'); return; }
-  // px → mm (y축 뒤집기), 좌하단 0 기준 정규화
-  const mm=S.verts.map(v=>({x:v.x/PX_PER_MM, y:-v.y/PX_PER_MM}));
-  const minx=Math.min(...mm.map(p=>p.x)), miny=Math.min(...mm.map(p=>p.y));
-  const P=mm.map(p=>({x:Math.round(p.x-minx), y:Math.round(p.y-miny)}));
-
+  if(S.outline.length<3){ flash('먼저 평면도를 만들어주세요'); return; }
+  const all=allPts(); const minx=Math.min(...all.map(p=>p.x)), maxy=Math.max(...all.map(p=>p.y));
+  const X=v=>Math.round((v.x-minx)/PX_PER_MM), Y=v=>Math.round((maxy-v.y)/PX_PER_MM);
   let d='0\nSECTION\n2\nENTITIES\n';
-  // 벽 폴리라인
-  d+='0\nLWPOLYLINE\n8\nWALL\n90\n'+P.length+'\n70\n1\n';
-  P.forEach(p=>{ d+='10\n'+p.x+'\n20\n'+p.y+'\n'; });
+  // 외곽
+  d+='0\nLWPOLYLINE\n8\nWALL\n90\n'+S.outline.length+'\n70\n1\n';
+  S.outline.forEach(v=>{ d+='10\n'+X(v)+'\n20\n'+Y(v)+'\n'; });
+  // 내부벽
+  S.interiors.forEach(w=>{ d+='0\nLWPOLYLINE\n8\nINNER\n90\n'+w.pts.length+'\n70\n0\n';
+    w.pts.forEach(v=>{ d+='10\n'+X(v)+'\n20\n'+Y(v)+'\n'; }); });
   // 치수 텍스트
-  for(let i=0;i<P.length;i++){ const a=P[i], b=P[(i+1)%P.length];
-    const mmLen=S.wallMM[i]|| Math.round(dist(S.verts[i],S.verts[(i+1)%S.verts.length])/PX_PER_MM);
-    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
-    d+='0\nTEXT\n8\nDIM\n10\n'+Math.round(mx)+'\n20\n'+Math.round(my)+'\n40\n120\n1\n'+mmLen+'\n'; }
+  const addDim=(a,b,mm)=>{ const len=mm||Math.round(dist(a,b)/PX_PER_MM);
+    d+='0\nTEXT\n8\nDIM\n10\n'+Math.round((X(a)+X(b))/2)+'\n20\n'+Math.round((Y(a)+Y(b))/2)+'\n40\n120\n1\n'+len+'\n'; };
+  for(let i=0;i<S.outline.length;i++) addDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i]);
+  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) addDim(w.pts[j],w.pts[j+1],w.mm[j]); });
   d+='0\nENDSEC\n0\nEOF\n';
-
-  const blob=new Blob([d],{type:'application/dxf'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download='kcc_실측도면_'+Date.now()+'.dxf'; a.click();
-  URL.revokeObjectURL(url); flash('DXF 파일이 저장됐어요');
+  const blob=new Blob([d],{type:'application/dxf'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='kcc_실측도면_'+Date.now()+'.dxf'; a.click();
+  URL.revokeObjectURL(url); flash('DXF 저장됨 (WALL·INNER·DIM 레이어)');
 }
 
 /* =========================================================================
-   레이저 (Bosch GLM 50-27 CG) · Web Bluetooth  — 필드앱 검증 로직
+   레이저 (Bosch GLM 50-27 CG) · Web Bluetooth
    ========================================================================= */
-const BOSCH={
-  svc:'02a6c0d0-0451-4000-b000-fb3210111989',
-  char:'02a6c0d1-0451-4000-b000-fb3210111989',
-  enableCmd:new Uint8Array([0xc0,0x55,0x02,0x01,0x00,0x1a]),
-  pktPrefix:[0xc0,0x55,0x10,0x06],
-  parse(dv){ const b=new Uint8Array(dv.buffer);
-    if(this.pktPrefix.every((x,i)=>b[i]===x)&&b.length>=11) return Math.round(dv.getFloat32(7,true)*1000);
-    return null; }
-};
+const BOSCH={ svc:'02a6c0d0-0451-4000-b000-fb3210111989', char:'02a6c0d1-0451-4000-b000-fb3210111989',
+  enableCmd:new Uint8Array([0xc0,0x55,0x02,0x01,0x00,0x1a]), pktPrefix:[0xc0,0x55,0x10,0x06],
+  parse(dv){ const b=new Uint8Array(dv.buffer); if(this.pktPrefix.every((x,i)=>b[i]===x)&&b.length>=11) return Math.round(dv.getFloat32(7,true)*1000); return null; } };
 const laser={device:null,char:null,connected:false};
 const pop=document.getElementById('laserPop');
-pop.innerHTML=`
-  <h4>📡 레이저 측정기 <span style="font-weight:600;color:var(--muted);font-size:11px">Bosch GLM 50-27 CG</span></h4>
+pop.innerHTML=`<h4>📡 레이저 측정기 <span style="font-weight:600;color:var(--muted);font-size:11px">Bosch GLM 50-27 CG</span></h4>
   <div class="st off" id="lsSt">연결 안됨</div>
   <button class="btn primary" id="lsConn" style="width:100%;justify-content:center">기기 검색 · 연결</button>
   <div class="val" id="lsVal">— <small>mm</small></div>
   <div class="switch" style="margin-top:4px"><input type="checkbox" id="lsAuto" checked> 측정값을 선택한 벽에 자동 입력</div>
   <div class="log" id="lsLog">안드로이드 Chrome · https 에서 연결하세요.\n</div>`;
-const $=id=>pop.querySelector('#'+id);
-let autofill=true;
+const $=id=>pop.querySelector('#'+id); let autofill=true;
 $('lsAuto').onchange=e=>autofill=e.target.checked;
 function lg(t){ const l=$('lsLog'); l.textContent+=t+'\n'; l.scrollTop=l.scrollHeight; }
 function stat(c,t){ const s=$('lsSt'); s.className='st '+c; s.textContent=t;
-  $('lsConn').textContent=c==='on'?'연결 해제':'기기 검색 · 연결';
-  document.getElementById('btnLaser').classList.toggle('on',c==='on'); }
+  $('lsConn').textContent=c==='on'?'연결 해제':'기기 검색 · 연결'; document.getElementById('btnLaser').classList.toggle('on',c==='on'); }
 document.getElementById('btnLaser').onclick=()=>pop.classList.toggle('open');
 $('lsConn').onclick=connect;
-
 async function connect(){
   if(!navigator.bluetooth){ stat('err','Web Bluetooth 미지원'); lg('⚠ 안드로이드 Chrome + https 필요'); return; }
-  if(laser.device && laser.device.gatt.connected){ laser.device.gatt.disconnect(); return; }
-  try{
-    stat('off','기기 선택 대기…'); lg('▶ 기기 검색…');
+  if(laser.device&&laser.device.gatt.connected){ laser.device.gatt.disconnect(); return; }
+  try{ stat('off','기기 선택 대기…'); lg('▶ 기기 검색…');
     laser.device=await navigator.bluetooth.requestDevice({filters:[{services:[BOSCH.svc]}],optionalServices:[BOSCH.svc]});
     lg('· 선택: '+(laser.device.name||'GLM'));
-    laser.device.addEventListener('gattserverdisconnected',()=>{ laser.connected=false; stat('off','연결 끊김'); lg('· 연결 끊김'); });
-    const server=await laser.device.gatt.connect();
-    const svc=await server.getPrimaryService(BOSCH.svc);
-    laser.char=await svc.getCharacteristic(BOSCH.char);
-    await laser.char.startNotifications();
+    laser.device.addEventListener('gattserverdisconnected',()=>{laser.connected=false;stat('off','연결 끊김');lg('· 연결 끊김');});
+    const server=await laser.device.gatt.connect(); const svc=await server.getPrimaryService(BOSCH.svc);
+    laser.char=await svc.getCharacteristic(BOSCH.char); await laser.char.startNotifications();
     laser.char.addEventListener('characteristicvaluechanged',e=>onRaw(e.target.value));
     await laser.char.writeValueWithResponse(BOSCH.enableCmd);
-    laser.connected=true; stat('on','연결됨 · '+(laser.device.name||'GLM'));
-    lg('✔ 준비 완료 — 벽 선택 후 측정하세요');
-  }catch(err){ if(err.name==='NotFoundError'){ stat('off','선택 취소'); lg('· 취소'); }
-    else { stat('err','연결 실패'); lg('✖ '+err.message); } }
+    laser.connected=true; stat('on','연결됨 · '+(laser.device.name||'GLM')); lg('✔ 준비 완료 — 벽 선택 후 측정');
+  }catch(err){ if(err.name==='NotFoundError'){stat('off','선택 취소');lg('· 취소');} else {stat('err','연결 실패');lg('✖ '+err.message);} }
 }
-function onRaw(dv){
-  const hex=[...new Uint8Array(dv.buffer)].map(b=>b.toString(16).padStart(2,'0')).join(' ');
-  lg('◀ '+hex);
-  let mm=null; try{ mm=BOSCH.parse(dv); }catch(e){}
-  if(mm!=null && isFinite(mm)){ $('lsVal').innerHTML=mm+' <small>mm</small>'; lg('  → '+mm+' mm');
-    if(autofill && S.sel>=0){ dbInput.value=mm; snap(); S.wallMM[S.sel]=mm; rebuild(); render(); flash('벽 #'+(S.sel+1)+' → '+mm+'mm'); } }
-}
+function onRaw(dv){ const hex=[...new Uint8Array(dv.buffer)].map(b=>b.toString(16).padStart(2,'0')).join(' '); lg('◀ '+hex);
+  let mm=null; try{mm=BOSCH.parse(dv);}catch(e){}
+  if(mm!=null&&isFinite(mm)){ $('lsVal').innerHTML=mm+' <small>mm</small>'; lg('  → '+mm+' mm');
+    if(autofill&&S.sel){ dbInput.value=mm; pushHist(); setMM(S.sel,mm); rebuildChain(S.sel); render(); flash('→ '+mm+'mm 적용'); } } }
 
-/* =========================================================================
-   시작: 데모 직사각형 (지우고 직접 그려도 됨)
-   ========================================================================= */
-function seed(){
-  S.verts=[{x:560,y:400},{x:1040,y:400},{x:1040,y:640},{x:560,y:640}];
-  S.wallMM=[0,0,0,0]; setMode('edit'); fit();
-}
-seed();
+/* ---------- 시작 (데모 없음, 빈 화면) ---------- */
+setMode('sketch'); apply(); render(); syncZoombar();
 window.addEventListener('resize',()=>{ syncZoombar(); render(); });
-syncZoombar();
 </script>
 </body>
 </html>
