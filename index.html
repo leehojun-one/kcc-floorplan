@@ -205,9 +205,8 @@ function render(){
     // 벽체 선택 하이라이트
     if(S.selWall){ const g=selSeg(S.selWall); if(g){ const h=el('line',{x1:g.a.x,y1:g.a.y,x2:g.b.x,y2:g.b.y,
       stroke:'var(--sel)','stroke-width':DEF_TH,'stroke-linecap':'butt',opacity:.18},svg); } }
-    // 치수 (내경) + 박스
-    for(let i=0;i<S.outline.length;i++) drawDim(S.outline[i],S.outline[(i+1)%S.outline.length],S.outlineMM[i],c,{t:'o',w:i},34*K,true,K);
-    S.interiors.forEach((w,s)=>{ for(let j=0;j<w.pts.length-1;j++) drawDim(w.pts[j],w.pts[j+1],w.mm[j],c,{t:'in',s,w:j},22*K,false,K); });
+    // 치수 : 도면 바깥 연속 치수선(내경 구간 + 전체)
+    drawDimensions(c,K);
   }
   if(S.mode==='sketch'){ S.strokes.forEach(st=>strokePath(st,'#8A93A2',K)); if(S.cur)strokePath(S.cur,'var(--accent)',K); }
   updatePaperLbl(); updateHint();
@@ -285,7 +284,53 @@ function hitWall(a,b,ref,K){ const h=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stro
   h.style.cursor='pointer'; h.dataset.wall=JSON.stringify(ref); }
 function selSeg(sel){ if(sel.t==='o'){ const n=S.outline.length;if(!n)return null;return {a:S.outline[sel.w],b:S.outline[(sel.w+1)%n]}; }
   const w=S.interiors[sel.s];if(!w)return null;return {a:w.pts[sel.w],b:w.pts[sel.w+1]}; }
-function sameRef(x,y){ return x&&y&&x.t===y.t&&x.w===y.w&&x.s===y.s; }
+function sameRef(x,y){ return x&&y&&x.t===y.t&&x.w===y.w&&x.s===y.s&&x.i===y.i; }
+
+/* ===== 도면 바깥 연속 치수선 (내경 구간 + 전체) ===== */
+function gridX(){ const s=new Set(); S.outline.forEach(v=>s.add(Math.round(v.x)));
+  S.interiors.forEach(w=>w.pts.forEach(v=>s.add(Math.round(v.x)))); return [...s].sort((a,b)=>a-b); }
+function gridY(){ const s=new Set(); S.outline.forEach(v=>s.add(Math.round(v.y)));
+  S.interiors.forEach(w=>w.pts.forEach(v=>s.add(Math.round(v.y)))); return [...s].sort((a,b)=>a-b); }
+function obounds(){ const xs=S.outline.map(v=>v.x),ys=S.outline.map(v=>v.y);
+  return {minx:Math.min(...xs),maxx:Math.max(...xs),miny:Math.min(...ys),maxy:Math.max(...ys)}; }
+function drawDimensions(c,K){
+  if(S.outline.length<3)return;
+  const xs=gridX(), ys=gridY(), b=obounds(); if(xs.length<2||ys.length<2)return;
+  const g1=44*K, g2=92*K, ext=8*K;
+  // 상단: 세로 격자선 → 보조선 + 구간(내경) 치수
+  const yT=b.miny-g1;
+  xs.forEach(x=>el('line',{x1:x,y1:b.miny,x2:x,y2:yT-ext,stroke:'var(--dim-line)','stroke-width':.8*K},svg));
+  for(let i=0;i<xs.length-1;i++) dimBar({x:xs[i],y:yT},{x:xs[i+1],y:yT}, Math.max(0,xs[i+1]-xs[i]-DEF_TH), {t:'gx',i}, K);
+  dimBar({x:xs[0],y:b.miny-g2},{x:xs[xs.length-1],y:b.miny-g2}, xs[xs.length-1]-xs[0]-DEF_TH, {t:'tot'}, K);
+  // 좌측: 가로 격자선
+  const xL=b.minx-g1;
+  ys.forEach(y=>el('line',{x1:b.minx,y1:y,x2:xL-ext,y2:y,stroke:'var(--dim-line)','stroke-width':.8*K},svg));
+  for(let i=0;i<ys.length-1;i++) dimBar({x:xL,y:ys[i]},{x:xL,y:ys[i+1]}, Math.max(0,ys[i+1]-ys[i]-DEF_TH), {t:'gy',i}, K);
+  dimBar({x:b.minx-g2,y:ys[0]},{x:b.minx-g2,y:ys[ys.length-1]}, ys[ys.length-1]-ys[0]-DEF_TH, {t:'tot'}, K);
+}
+function dimBar(a,b,val,ref,K){
+  const g=el('g',{},svg);
+  el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'var(--dim-line)','stroke-width':K},g);
+  arrow(g,a,b,K); arrow(g,b,a,K);
+  const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+  const total=ref.t==='tot', active=!total&&sameRef(S.activeBox,ref);
+  const txt=val>0?String(val):'—', tw=(txt.length*8.5+16)*K, th=24*K;
+  const col=active?'var(--active)':(total?'var(--ink)':'var(--dim)');
+  const box=el('g',{},svg); if(!total){ box.dataset.box=JSON.stringify(ref); box.style.cursor='pointer'; }
+  el('rect',{x:mid.x-tw/2,y:mid.y-th/2,width:tw,height:th,rx:6*K,
+    fill:active?'var(--active)':'#fff',stroke:col,'stroke-width':(total?2:1.6)*K},box);
+  el('text',{x:mid.x,y:mid.y,'text-anchor':'middle','dominant-baseline':'central','font-family':'IBM Plex Mono',
+    'font-size':13*K,'font-weight':total?700:600,fill:active?'#fff':col},box).textContent=txt;
+}
+function segMM(ref){ if(ref.t==='gx'){ const xs=gridX(); return Math.max(0,xs[ref.i+1]-xs[ref.i]-DEF_TH); }
+  if(ref.t==='gy'){ const ys=gridY(); return Math.max(0,ys[ref.i+1]-ys[ref.i]-DEF_TH); } return 0; }
+function shiftX(fromX,d){ const e=1; S.outline.forEach(v=>{if(v.x>=fromX-e)v.x+=d;}); S.interiors.forEach(w=>w.pts.forEach(v=>{if(v.x>=fromX-e)v.x+=d;})); }
+function shiftY(fromY,d){ const e=1; S.outline.forEach(v=>{if(v.y>=fromY-e)v.y+=d;}); S.interiors.forEach(w=>w.pts.forEach(v=>{if(v.y>=fromY-e)v.y+=d;})); }
+function applyGrid(ref,innerMM){
+  if(ref.t==='gx'){ const xs=gridX(); shiftX(xs[ref.i+1], (innerMM+DEF_TH)-(xs[ref.i+1]-xs[ref.i])); }
+  else if(ref.t==='gy'){ const ys=gridY(); shiftY(ys[ref.i+1], (innerMM+DEF_TH)-(ys[ref.i+1]-ys[ref.i])); }
+}
+
 
 function updatePaperLbl(){ document.getElementById('paperLbl').textContent=paperSize+' · 1:'+scale; }
 
@@ -322,16 +367,26 @@ function alignAll(){
   S.outline=S.outline.map(v=>({x:nb(v.x,gx),y:nb(v.y,gy)}));
   S.interiors.forEach(w=>{ w.pts=w.pts.map(v=>({x:nb(v.x,gx),y:nb(v.y,gy)})); });
 }
-/* ★ 내부벽 끝점을 가장 가까운 벽(선 투영 또는 정점)에 연결 */
+/* ★ 내부벽 끝점을 벽(선 투영/정점)에 연결 · 닿았는지 여부 반환 */
 function snapEnd(p,ignore){
-  const proj=snapToWalls(p,ignore); let best={d:dist(p,proj),pt:proj};
-  const RV=Math.max(500,scale*12);
-  const tryV=v=>{ const dd=dist(p,v); if(dd<RV&&dd<best.d)best={d:dd,pt:{x:v.x,y:v.y}}; };
+  const R=Math.max(1200,scale*22); let best=null;
+  const consSeg=(a,b)=>{ const r=distToSeg(p,a,b); if(r.d<R&&(!best||r.d<best.d))best={d:r.d,pt:r.proj}; };
+  for(let i=0;i<S.outline.length;i++) consSeg(S.outline[i],S.outline[(i+1)%S.outline.length]);
+  S.interiors.forEach((w,si)=>{ if(si===ignore)return; for(let j=0;j<w.pts.length-1;j++)consSeg(w.pts[j],w.pts[j+1]); });
+  const tryV=v=>{ const dd=dist(p,v); if(dd<R&&(!best||dd<best.d))best={d:dd,pt:{x:v.x,y:v.y}}; };
   S.outline.forEach(tryV); S.interiors.forEach((w,si)=>{ if(si===ignore)return; w.pts.forEach(tryV); });
-  return best.pt;
+  return best? {pt:best.pt,hit:true} : {pt:p,hit:false};
 }
-function snapInteriorEnds(){ S.interiors.forEach((w,si)=>{ if(w.pts.length<2)return;
-  w.pts[0]=snapEnd(w.pts[0],si); w.pts[w.pts.length-1]=snapEnd(w.pts[w.pts.length-1],si); }); }
+/* 끝 연결 + 어디에도 안 닿는 뜬 자투리 벽 제거 */
+function snapInteriorEnds(){ const keep=[];
+  S.interiors.forEach((w,si)=>{ if(w.pts.length<2)return;
+    const r0=snapEnd(w.pts[0],si), r1=snapEnd(w.pts[w.pts.length-1],si);
+    w.pts[0]=r0.pt; w.pts[w.pts.length-1]=r1.pt;
+    const floating = !r0.hit && !r1.hit;                 // 양 끝 모두 미연결
+    if(floating && chainLen(w.pts) < Math.max(2000,scale*40)) return;  // 뜬 자투리 → 버림
+    keep.push(w); });
+  S.interiors=keep;
+}
 /* ★ 외곽 삐침(overshoot)·중복정점·일직선 정리 */
 function colin(a,b,c){ if(Math.abs(a.y-b.y)<1&&Math.abs(b.y-c.y)<1)return true;
   if(Math.abs(a.x-b.x)<1&&Math.abs(b.x-c.x)<1)return true; return false; }
@@ -342,6 +397,13 @@ function cleanupOutline(){ if(S.outline.length<4)return;
   const res=[],n=out.length;
   for(let i=0;i<n;i++){ const a=out[(i-1+n)%n],b=out[i],c=out[(i+1)%n]; if(colin(a,b,c))continue; res.push(b); }
   S.outline = res.length>=3? res : out;
+}
+/* ★ 외곽을 완전한 직각으로: 가로변은 y 통일, 세로변은 x 통일 → 코너가 정확히 90°로 만남 */
+function rectifyOutline(){ const n=S.outline.length; if(n<4)return;
+  for(let i=0;i<n;i++){ const a=S.outline[i],b=S.outline[(i+1)%n];
+    if(Math.abs(b.x-a.x)>=Math.abs(b.y-a.y)){ const y=Math.round((a.y+b.y)/2); a.y=y; b.y=y; } }
+  for(let i=0;i<n;i++){ const a=S.outline[i],b=S.outline[(i+1)%n];
+    if(Math.abs(b.y-a.y)>Math.abs(b.x-a.x)){ const x=Math.round((a.x+b.x)/2); a.x=x; b.x=x; } }
 }
 function snapToWalls(p,ignore){ let best=null;const R=Math.max(500,scale*12);
   const cons=(a,b)=>{ const r=distToSeg(p,a,b); if(r.d<R&&(!best||r.d<best.d))best={d:r.d,proj:r.proj}; };
@@ -366,7 +428,8 @@ function convert(){
   S.interiors=S.interiors.concat(newIn.map(o=>({pts:o.pts,mm:[],th:[]})));
   if(S.ortho) alignAll();                    // 2) 전체 벽 공통 격자 정렬(벽끼리 맞춤)
   cleanupOutline();                          // 3) 외곽 삐침/일직선 정리
-  snapInteriorEnds();                        // 4) 내부벽 끝 → 벽에 연결
+  if(S.ortho){ rectifyOutline(); cleanupOutline(); rectifyOutline(); }  // 3b) 직각화 반복 수렴
+  snapInteriorEnds();                        // 4) 내부벽 끝 연결 + 뜬 자투리 제거
   // 치수/두께 배열 정합
   S.outlineMM=new Array(S.outline.length).fill(0); S.outlineTh=new Array(S.outline.length).fill(DEF_TH);
   S.interiors.forEach(w=>{ const seg=Math.max(0,w.pts.length-1);
@@ -443,18 +506,8 @@ function finalizeDrag(v){ if(v.t==='in'){ const w=S.interiors[v.s];
    ========================================================================= */
 function toggleActiveBox(ref){ if(sameRef(S.activeBox,ref)) S.activeBox=null; else { S.activeBox=ref;
     if(!laser.connected) flash('초록=실측 대기 · 레이저 연결하거나 길게 눌러 직접 입력'); else flash('측정기 버튼을 누르세요'); } render(); }
-function getMM(ref){ return ref.t==='o'?S.outlineMM[ref.w]:S.interiors[ref.s].mm[ref.w]; }
-function setMMv(ref,mm){ if(ref.t==='o')S.outlineMM[ref.w]=mm; else S.interiors[ref.s].mm[ref.w]=mm; }
-function applyMeasure(ref,mm){ pushHist(); setMMv(ref,mm); rebuildChain(ref); S.activeBox=null; render(); }
-/* 내경 입력 → 중심선 길이 = 내경 + 벽두께 (외곽), 내부벽은 그대로 */
-function rebuildChain(ref){
-  if(ref.t==='o'){ const n=S.outline.length;if(n<3)return; const dirs=[],lens=[];
-    for(let i=0;i<n;i++){ dirs.push(unit(S.outline[i],S.outline[(i+1)%n]));
-      lens.push(S.outlineMM[i]? S.outlineMM[i]+DEF_TH : dist(S.outline[i],S.outline[(i+1)%n])); }
-    const nv=[{...S.outline[0]}]; for(let i=0;i<n-1;i++)nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]}); S.outline=nv;
-  } else { const w=S.interiors[ref.s],n=w.pts.length; const dirs=[],lens=[];
-    for(let i=0;i<n-1;i++){ dirs.push(unit(w.pts[i],w.pts[i+1])); lens.push(w.mm[i]?w.mm[i]:dist(w.pts[i],w.pts[i+1])); }
-    const nv=[{...w.pts[0]}]; for(let i=0;i<n-1;i++)nv.push({x:nv[i].x+dirs[i].x*lens[i],y:nv[i].y+dirs[i].y*lens[i]}); w.pts=nv; } }
+function getMM(ref){ return segMM(ref); }
+function applyMeasure(ref,mm){ pushHist(); applyGrid(ref,mm); S.activeBox=null; render(); }
 
 const thbar=document.getElementById('thbar'),tbName=document.getElementById('tbName'),thVal=document.getElementById('thVal');
 function selectWallTh(ref){ S.selWall=ref; S.activeBox=null; render();
@@ -472,7 +525,7 @@ let npBuf='',npRef=null;
 ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach(kk=>{ const b=document.createElement('button');
   b.textContent=kk; if(kk==='⌫')b.className='del'; if(kk==='✓')b.className='ok'; b.onclick=()=>npKey(kk); npGrid.appendChild(b); });
 function openNumpad(ref){ npRef=ref; S.activeBox=ref; render(); npBuf=String(getMM(ref)||'');
-  npHead.textContent=(ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽')+' 내경(mm)'; npVal.textContent=npBuf||'0'; numpad.classList.add('open'); }
+  npHead.textContent=(ref.t==='gx'?'가로 구간':'세로 구간')+' 내경(mm)'; npVal.textContent=npBuf||'0'; numpad.classList.add('open'); }
 function closeNumpad(){ numpad.classList.remove('open'); npRef=null; }
 function npKey(kk){ if(kk==='⌫')npBuf=npBuf.slice(0,-1); else if(kk==='✓'){ applyNum(); return; } else if(npBuf.length<6)npBuf+=kk; npVal.textContent=npBuf||'0'; }
 function applyNum(){ if(!npRef)return; const mm=parseInt(npBuf)||0; applyMeasure(npRef,mm); closeNumpad(); flash('내경 '+mm+'mm 적용'); }
