@@ -11,7 +11,7 @@
   :root{
     --bg:#DFE3EA; --paper:#FFFFFF; --panel:#FFFFFF; --ink:#141821; --muted:#6B7686;
     --line:#D7DDE6; --grid:#EEF1F6; --grid-strong:#E2E7EF;
-    --wall:#232C3A; --inner:#3B4658;
+    --wall:#232C3A; --inner:#3B4658; --hatch:#525A63;
     --measured:#0E7C66; --unmeasured:#C2410C; --active:#0E9F6E;
     --sel:#1D6FE0; --accent:#E1251B; --dim-line:#9AA4B2;
     --shadow:0 10px 34px rgba(20,30,50,.16);
@@ -107,6 +107,7 @@
   <select id="selScale"></select>
   <div class="spacer"></div>
   <button class="btn" id="btnLaser">📡</button>
+  <button class="btn" id="btnDoor">🚪 도어</button>
   <button class="btn" id="btnExport">DXF</button>
   <button class="btn icon" id="btnSave" title="저장">💾</button>
   <button class="btn icon" id="btnOpen" title="열기">📂</button>
@@ -123,6 +124,16 @@
     <button class="btn icon" id="zIn">＋</button>
     <button class="btn icon" id="zOut">－</button>
     <button class="btn icon" id="zFit" title="용지 맞춤">⤢</button>
+  </div>
+
+  <!-- 방 정보 바 -->
+  <div class="thbar" id="roombar">
+    <div class="lab"><span class="sq" style="background:#0E9F6E"></span><span id="rbArea">방</span></div>
+    <div class="th"><span class="t">위치명</span><input id="rbName" placeholder="거실/안방…" style="width:96px;border:1px solid var(--line);border-radius:8px;height:38px;padding:0 8px;font-weight:600;-webkit-user-select:text;user-select:text"></div>
+    <div class="th"><span class="t">FL</span><input id="rbFL" inputmode="numeric" value="0" style="width:60px;text-align:center;border:1px solid var(--line);border-radius:8px;height:38px;font-family:'IBM Plex Mono';font-weight:700;-webkit-user-select:text;user-select:text"></div>
+    <div class="th"><span class="t">CH</span><input id="rbCH" inputmode="numeric" value="2300" style="width:66px;text-align:center;border:1px solid var(--line);border-radius:8px;height:38px;font-family:'IBM Plex Mono';font-weight:700;-webkit-user-select:text;user-select:text"></div>
+    <div class="grow"></div>
+    <button class="btn icon" id="rbClose">✕</button>
   </div>
 
   <!-- 벽체 두께 바 -->
@@ -160,7 +171,7 @@ function paperH(){ return PAPER[paperSize].h*scale; }
 
 const S={ mode:'sketch', ortho:true, strokes:[], cur:null,
   outline:[], outlineMM:[], outlineTh:[], interiors:[],
-  activeBox:null, selWall:null };
+  activeBox:null, selWall:null, rooms:[], roomMeta:[], doors:[] };
 
 let history=[];
 function pushHist(){ history.push(JSON.stringify({o:S.outline,om:S.outlineMM,ot:S.outlineTh,in:S.interiors,st:S.strokes}));
@@ -195,11 +206,13 @@ function render(){
 
   if(S.mode==='edit'){
     const c=S.outline.length?centroid(S.outline):{x:0,y:0};
-    // 벽체 2선 (외곽 = 안/밖 오프셋 폴리곤)
+    // 벽체: 안쪽 진회색 솔리드 + 2선 (접합부는 내부벽 채움이 안쪽선을 덮어 뚫림)
     if(S.outline.length>=3){
       const outer=offsetPoly(S.outline,DEF_TH/2), inner=offsetPoly(S.outline,-DEF_TH/2);
+      fillRing(outer,inner,'var(--hatch)');                 // 외벽 링 채움
       polyLine(outer,true,'var(--wall)',1.6*K); polyLine(inner,true,'var(--wall)',1.6*K);
-    }
+      S.interiors.forEach(w=>fillInner(w,'var(--hatch)'));  // 내부벽 채움 → 접합부 안쪽선 덮음(물 흐르듯)
+    } else S.interiors.forEach(w=>fillInner(w,'var(--hatch)'));
     // 내부벽 2선
     S.interiors.forEach(w=>drawInner(w,K));
     // 벽체 히트라인(중심선, 벽체 선택용)
@@ -210,6 +223,7 @@ function render(){
       stroke:'var(--sel)','stroke-width':DEF_TH,'stroke-linecap':'butt',opacity:.18},svg); } }
     // 치수 : 도면 바깥 연속 치수선(내경 구간 + 전체)
     drawDimensions(c,K);
+    syncRooms(); drawRooms(K); drawDoors(K);
   }
   if(S.mode==='sketch'){ drawGhost(K); S.strokes.forEach(st=>strokePath(st,'#8A93A2',K)); if(S.cur)strokePath(S.cur,'var(--accent)',K); }
   updatePaperLbl(); updateHint();
@@ -224,6 +238,15 @@ function drawGrid(){ const g=el('g',{},svg); const step=1000; // 1m 격자(실�
 }
 function polyLine(pts,closed,color,wd){ const d=pts.map((p,i)=>(i?'L':'M')+p.x+' '+p.y).join(' ')+(closed?' Z':'');
   el('path',{d,fill:'none',stroke:color,'stroke-width':wd,'stroke-linejoin':'miter','stroke-miterlimit':8},svg); }
+function pathD(pts,closed){ return pts.map((p,i)=>(i?'L':'M')+p.x+' '+p.y).join(' ')+(closed?' Z':''); }
+/* 외벽 링(바깥-안쪽) 진회색 채움 */
+function fillRing(outer,inner,color){ el('path',{d:pathD(outer,true)+' '+pathD(inner,true),fill:color,'fill-rule':'evenodd',stroke:'none'},svg); }
+/* 내부벽 두께 밴드 진회색 채움 (끝을 살짝 연장해 접합부 병합) */
+function fillInner(w,color){ const t=DEF_TH/2;
+  for(let j=0;j<w.pts.length-1;j++){ const a=w.pts[j],b=w.pts[j+1],d=unit(a,b),n=perp(a,b);
+    const A={x:a.x-d.x*t,y:a.y-d.y*t}, B={x:b.x+d.x*t,y:b.y+d.y*t};
+    const q=[{x:A.x+n.x*t,y:A.y+n.y*t},{x:B.x+n.x*t,y:B.y+n.y*t},{x:B.x-n.x*t,y:B.y-n.y*t},{x:A.x-n.x*t,y:A.y-n.y*t}];
+    el('polygon',{points:q.map(p=>`${p.x},${p.y}`).join(' '),fill:color,stroke:'none'},svg); } }
 function drawInner(w,K){
   if(w.pts.length<2)return;
   const c=trimInner(w.pts);                       // 끝을 벽 안쪽 면까지 트림
@@ -300,6 +323,87 @@ function gridY(){ const s=new Set(); S.outline.forEach(v=>s.add(Math.round(v.y))
   S.interiors.forEach(w=>w.pts.forEach(v=>s.add(Math.round(v.y)))); return [...s].sort((a,b)=>a-b); }
 function obounds(){ const xs=S.outline.map(v=>v.x),ys=S.outline.map(v=>v.y);
   return {minx:Math.min(...xs),maxx:Math.max(...xs),miny:Math.min(...ys),maxy:Math.max(...ys)}; }
+function lerp(a,b,t){ return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}; }
+
+/* ===== 방(폐공간) 자동 인식 : 격자 셀 flood fill ===== */
+function allWallSegs(){ const segs=[];
+  const add=(a,b)=>{ if(Math.abs(a.x-b.x)<Math.abs(a.y-b.y)) segs.push({v:true,x:(a.x+b.x)/2,lo:Math.min(a.y,b.y),hi:Math.max(a.y,b.y)});
+    else segs.push({v:false,y:(a.y+b.y)/2,lo:Math.min(a.x,b.x),hi:Math.max(a.x,b.x)}); };
+  for(let i=0;i<S.outline.length;i++) add(S.outline[i],S.outline[(i+1)%S.outline.length]);
+  S.interiors.forEach(w=>{ for(let j=0;j<w.pts.length-1;j++) add(w.pts[j],w.pts[j+1]); });
+  return segs; }
+function wallOnV(segs,x,y0,y1){ const my=(y0+y1)/2, tol=DEF_TH;
+  return segs.some(s=>s.v && Math.abs(s.x-x)<tol && s.lo-1<=my && my<=s.hi+1); }
+function wallOnH(segs,y,x0,x1){ const mx=(x0+x1)/2, tol=DEF_TH;
+  return segs.some(s=>!s.v && Math.abs(s.y-y)<tol && s.lo-1<=mx && mx<=s.hi+1); }
+function detectRooms(){
+  if(S.outline.length<3)return [];
+  const xs=gridX(), ys=gridY(), nx=xs.length, ny=ys.length; if(nx<2||ny<2)return [];
+  const segs=allWallSegs();
+  const open=[]; for(let i=0;i<nx-1;i++){ open[i]=[]; for(let j=0;j<ny-1;j++){
+    open[i][j]=pointInPoly({x:(xs[i]+xs[i+1])/2,y:(ys[j]+ys[j+1])/2}, S.outline); } }
+  const id=(i,j)=>i*(ny-1)+j, parent=[]; for(let k=0;k<(nx-1)*(ny-1);k++)parent[k]=k;
+  const find=x=>{ while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];} return x; };
+  const uni=(a,b)=>{ parent[find(a)]=find(b); };
+  for(let i=0;i<nx-2;i++)for(let j=0;j<ny-1;j++){ if(open[i][j]&&open[i+1][j] && !wallOnV(segs,xs[i+1],ys[j],ys[j+1])) uni(id(i,j),id(i+1,j)); }
+  for(let i=0;i<nx-1;i++)for(let j=0;j<ny-2;j++){ if(open[i][j]&&open[i][j+1] && !wallOnH(segs,ys[j+1],xs[i],xs[i+1])) uni(id(i,j),id(i,j+1)); }
+  const groups={}; for(let i=0;i<nx-1;i++)for(let j=0;j<ny-1;j++){ if(!open[i][j])continue;
+    (groups[find(id(i,j))]=groups[find(id(i,j))]||[]).push([i,j]); }
+  const t=DEF_TH/2;
+  return Object.values(groups).map(cells=>{
+    let area=0,cxs=0,cys=0,ws=0;
+    cells.forEach(([i,j])=>{
+      const lW=(i===0)||wallOnV(segs,xs[i],ys[j],ys[j+1]), rW=(i===nx-2)||wallOnV(segs,xs[i+1],ys[j],ys[j+1]);
+      const tW=(j===0)||wallOnH(segs,ys[j],xs[i],xs[i+1]), bW=(j===ny-2)||wallOnH(segs,ys[j+1],xs[i],xs[i+1]);
+      const iw=Math.max(0,(xs[i+1]-xs[i])-(lW?t:0)-(rW?t:0)), ih=Math.max(0,(ys[j+1]-ys[j])-(tW?t:0)-(bW?t:0));
+      const a=iw*ih; area+=a; const cx=(xs[i]+xs[i+1])/2,cy=(ys[j]+ys[j+1])/2; cxs+=cx*a; cys+=cy*a; ws+=a;
+    });
+    return {cells,xs,ys,area, cx:ws?cxs/ws:0, cy:ws?cys/ws:0};
+  }).filter(r=>r.area>200000); // 0.2㎡ 미만(자투리) 제외
+}
+function roomAt(cx,cy){ const p=toSvg(cx,cy);
+  for(const r of (S.rooms||[])){ for(const [i,j] of r.cells){
+    if(p.x>=r.xs[i]&&p.x<=r.xs[i+1]&&p.y>=r.ys[j]&&p.y<=r.ys[j+1]) return r; } } return null; }
+/* 방 메타(이름/FL/CH) 유지 : 무게중심 근접 매칭 */
+function syncRooms(){ const rooms=detectRooms(), nm=[];
+  rooms.forEach(r=>{ let best=null,bd=1e9; (S.roomMeta||[]).forEach(m=>{ const d=Math.hypot(m.cx-r.cx,m.cy-r.cy); if(d<bd){bd=d;best=m;} });
+    r.meta = (best&&bd<2000)? Object.assign({},best,{cx:r.cx,cy:r.cy}) : {cx:r.cx,cy:r.cy,name:'',fl:0,ch:2300};
+    nm.push(r.meta); });
+  S.roomMeta=nm; S.rooms=rooms; }
+function fmtFL(v){ return v>0?('+'+v):(v<0?(''+v):'±0'); }
+function roomAreaTxt(r){ const m2=r.area/1e6; return m2.toFixed(1)+'㎡ · '+(m2/3.3058).toFixed(1)+'평'; }
+function drawRooms(K){
+  (S.rooms||[]).forEach((r,idx)=>{ const m=r.meta;
+    const g=el('g',{},svg); g.dataset.room=idx; g.style.cursor='pointer';
+    const lines=[ m.name||'(방 이름)', roomAreaTxt(r), 'FL '+fmtFL(m.fl)+' · CH '+m.ch ];
+    const fs=[15,12.5,11.5];
+    lines.forEach((tx,i)=>{ el('text',{x:r.cx,y:r.cy+(i-1)*16*K,'text-anchor':'middle','dominant-baseline':'central',
+      'font-family':i===0?'Space Grotesk':'IBM Plex Mono','font-size':fs[i]*K,'font-weight':i===0?700:500,
+      fill:i===0?(m.name?'#1B2430':'#AEB6C0'):'#6B7686'},g).textContent=tx; }); });
+}
+
+/* ===== 샘플 도어 (900×2300) ===== */
+function segFor(ref){ return selSeg(ref); }
+function drawDoors(K){
+  (S.doors||[]).forEach(dr=>{ const seg=segFor(dr.ref); if(!seg)return; const {a,b}=seg;
+    const dir=unit(a,b), n=perp(a,b), half=dr.width/2, ctr=lerp(a,b,dr.pos);
+    const p1={x:ctr.x-dir.x*half,y:ctr.y-dir.y*half}, p2={x:ctr.x+dir.x*half,y:ctr.y+dir.y*half}, t=DEF_TH/2+K;
+    const q=[{x:p1.x+n.x*t,y:p1.y+n.y*t},{x:p2.x+n.x*t,y:p2.y+n.y*t},{x:p2.x-n.x*t,y:p2.y-n.y*t},{x:p1.x-n.x*t,y:p1.y-n.y*t}];
+    el('polygon',{points:q.map(p=>`${p.x},${p.y}`).join(' '),fill:'var(--paper)',stroke:'none'},svg);
+    el('line',{x1:p1.x+n.x*t,y1:p1.y+n.y*t,x2:p1.x-n.x*t,y2:p1.y-n.y*t,stroke:'var(--wall)','stroke-width':1.4*K},svg);
+    el('line',{x1:p2.x+n.x*t,y1:p2.y+n.y*t,x2:p2.x-n.x*t,y2:p2.y-n.y*t,stroke:'var(--wall)','stroke-width':1.4*K},svg);
+    let ni={x:n.x,y:n.y}; const c=centroid(S.outline); if((ctr.x-c.x)*ni.x+(ctr.y-c.y)*ni.y>0){ni.x=-ni.x;ni.y=-ni.y;}
+    const hinge=dr.hinge==='right'?p2:p1, other=dr.hinge==='right'?p1:p2;
+    const leaf={x:hinge.x+ni.x*dr.width,y:hinge.y+ni.y*dr.width};
+    el('line',{x1:hinge.x,y1:hinge.y,x2:leaf.x,y2:leaf.y,stroke:'var(--wall)','stroke-width':1.6*K},svg);
+    el('path',{d:`M ${other.x} ${other.y} A ${dr.width} ${dr.width} 0 0 ${dr.hinge==='right'?1:0} ${leaf.x} ${leaf.y}`,
+      fill:'none',stroke:'var(--dim-line)','stroke-width':K,'stroke-dasharray':`${5*K} ${4*K}`},svg);
+    const h=el('circle',{cx:ctr.x,cy:ctr.y,r:half,fill:'transparent'},svg); h.dataset.door=JSON.stringify(dr.ref); h.style.cursor='pointer';
+  });
+}
+function addDoor(){ if(!S.selWall){ flash('벽을 먼저 탭해서 선택하세요'); return; }
+  const seg=selSeg(S.selWall); if(!seg)return; if(dist(seg.a,seg.b)<1000){ flash('문을 넣기엔 벽이 짧아요'); return; }
+  pushHist(); S.doors.push({ref:S.selWall,pos:0.5,width:900,height:2300,hinge:'left'}); S.selWall=null; closeTh(); render(); flash('900×2300 샘플 도어 추가'); }
 /* 상/하 외곽변에 닿는 세로벽의 x (외곽 좌우 포함) */
 function edgeVerticals(atTop){ const b=obounds(), yE=atTop?b.miny:b.maxy, tol=Math.max(DEF_TH*1.6,scale*4);
   const set=new Set([Math.round(b.minx),Math.round(b.maxx)]);
@@ -521,6 +625,8 @@ svg.addEventListener('pointerup',e=>{
   if(pend){ cancelLP();
     if(!lpFired){ if(pend.kind==='box') toggleActiveBox(pend.ref); else selectWallTh(pend.ref); }
     pend=null; startPan=null; return; }
+  if(!moved){ const r=roomAt(e.clientX,e.clientY);   // 빈 영역 탭 = 방 선택
+    if(r){ closeRoom(); openRoom(S.rooms.indexOf(r)); } else { closeRoom(); if(S.selWall){S.selWall=null;closeTh();render();} } }
   startPan=null;
 });
 svg.addEventListener('pointercancel',e=>{ pointers.delete(e.pointerId); if(pointers.size<2)lastPinch=null; S.cur=null;dragV=null;cancelLP();pend=null; });
@@ -561,9 +667,25 @@ function selectWallTh(ref){ S.selWall=ref; S.activeBox=null; render();
   tbName.textContent=ref.t==='o'?'외벽 #'+(ref.w+1):'내부벽'; thInput.value=DEF_TH; thbar.classList.add('open'); syncZoombar(); }
 function closeTh(){ thbar.classList.remove('open'); syncZoombar(); }
 function syncZoombar(){ document.documentElement.style.setProperty('--dimh',
-  (thbar.classList.contains('open'))?(thbar.offsetHeight+'px'):'0px'); }
+  (thbar.classList.contains('open')||document.getElementById('roombar').classList.contains('open'))?
+   Math.max(thbar.offsetHeight,document.getElementById('roombar').offsetHeight)+'px':'0px'); }
 document.getElementById('tbClose').onclick=()=>{ S.selWall=null; closeTh(); render(); };
 thInput.oninput=()=>{ const v=parseInt(thInput.value); if(v>=40&&v<=500){ DEF_TH=v; render(); } };
+
+/* 방 정보 바 */
+const roombar=document.getElementById('roombar');
+let curRoom=null;
+function openRoom(idx){ const r=S.rooms[idx]; if(!r)return; curRoom=r; S.selWall=null; closeTh();
+  document.getElementById('rbArea').textContent=roomAreaTxt(r);
+  document.getElementById('rbName').value=r.meta.name||'';
+  document.getElementById('rbFL').value=r.meta.fl; document.getElementById('rbCH').value=r.meta.ch;
+  roombar.classList.add('open'); syncZoombar(); }
+function closeRoom(){ roombar.classList.remove('open'); curRoom=null; syncZoombar(); }
+document.getElementById('rbClose').onclick=closeRoom;
+document.getElementById('rbName').oninput=()=>{ if(curRoom){ curRoom.meta.name=document.getElementById('rbName').value; render(); } };
+document.getElementById('rbFL').oninput=()=>{ if(curRoom){ curRoom.meta.fl=parseInt(document.getElementById('rbFL').value)||0; render(); } };
+document.getElementById('rbCH').oninput=()=>{ if(curRoom){ curRoom.meta.ch=parseInt(document.getElementById('rbCH').value)||0; render(); } };
+document.getElementById('btnDoor').onclick=addDoor;
 
 /* 숫자패드 */
 const numpad=document.getElementById('numpad'),npVal=document.getElementById('npVal'),npHead=document.getElementById('npHead'),npGrid=document.getElementById('npGrid');
@@ -605,13 +727,13 @@ document.getElementById('btnOrtho').onclick=()=>{ S.ortho=!S.ortho; const b=docu
 document.getElementById('btnUndo').onclick=undo;
 document.getElementById('btnClear').onclick=()=>{ if(!confirm('전체 지울까요?'))return;
   pushHist(); S.outline=[];S.outlineMM=[];S.outlineTh=[];S.interiors=[];S.strokes=[];S.cur=null;S.activeBox=null;S.selWall=null;
-  closeTh();closeNumpad(); setMode('sketch'); fitPaper(); };
+  S.doors=[];S.roomMeta=[];S.rooms=[]; closeTh();closeNumpad();closeRoom(); setMode('sketch'); fitPaper(); };
 document.getElementById('btnExport').onclick=exportDXF;
 
 /* 파일 저장 / 불러오기 (.json) */
 function saveFile(){
-  const data={app:'ballo',v:1,paperSize,scale,outline:S.outline,outlineTh:S.outlineTh,
-    interiors:S.interiors.map(w=>({pts:w.pts}))};
+  const data={app:'ballo',v:2,paperSize,scale,outline:S.outline,outlineTh:S.outlineTh,
+    interiors:S.interiors.map(w=>({pts:w.pts})), doors:S.doors, roomMeta:S.roomMeta};
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url; a.download='ballo_도면_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url); flash('저장됨');
 }
@@ -621,6 +743,7 @@ function loadFile(file){ const r=new FileReader();
     S.outline=d.outline||[]; S.outlineTh=d.outlineTh||S.outline.map(()=>DEF_TH);
     S.outlineMM=S.outline.map(()=>0);
     S.interiors=(d.interiors||[]).map(w=>({pts:w.pts,mm:new Array(Math.max(0,w.pts.length-1)).fill(0),th:new Array(Math.max(0,w.pts.length-1)).fill(DEF_TH)}));
+    S.doors=d.doors||[]; S.roomMeta=d.roomMeta||[]; S.rooms=[];
     S.strokes=[];S.cur=null;S.activeBox=null;S.selWall=null;
     document.getElementById('selSize').value=paperSize; document.getElementById('selScale').value=scale;
     setMode('edit'); fitContent(); flash('불러왔어요');
